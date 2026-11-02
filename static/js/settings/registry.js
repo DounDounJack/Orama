@@ -62,7 +62,13 @@ export const SETTINGS_PANELS = Object.freeze([
     id: 'ai',
     label: 'AI Defaults',
     group: 'models',
-    keywords: ['ai', 'defaults', 'model', 'vision', 'image', 'tts', 'stt'],
+    keywords: ['ai', 'defaults', 'model', 'vision', 'image'],
+  }),
+  definePanel({
+    id: 'speech',
+    label: 'Speech',
+    group: 'models',
+    keywords: ['speech', 'voice', 'tts', 'stt', 'whisper', 'microphone', 'read aloud', 'talk'],
   }),
   definePanel({
     id: 'search',

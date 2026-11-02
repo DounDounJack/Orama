@@ -60,3 +60,21 @@ def test_talk_mode_restores_autoplay_and_releases_mic():
     assert "tts.autoPlay = true" in TALK
     assert "window.aiTTSManager.autoPlay = _prevAutoPlay" in TALK
     assert "_releaseMic()" in TALK
+
+
+REGISTRY = (ROOT / "static/js/settings/registry.js").read_text(encoding="utf-8")
+SPEECH_JS = (ROOT / "static/js/settings/speech.js").read_text(encoding="utf-8")
+
+
+def test_settings_has_a_speech_tab_with_both_cards():
+    assert 'data-settings-tab="speech"' in INDEX
+    panel = INDEX.split('data-settings-panel="speech"', 1)[1].split('data-settings-panel="search"', 1)[0]
+    assert "display:none" not in panel.split('id="set-ttsEnabledToggle"', 1)[0][-400:]
+    for el_id in ("set-ttsEnabledToggle", "set-ttsProviderSelect", "set-ttsVoiceSelect",
+                  "set-ttsVoiceInput", "set-ttsSpeedSelect", "set-sttEnabledToggle",
+                  "set-sttConfigWrap", "set-sttProviderSelect", "set-sttModelSelect",
+                  "set-sttModelInput", "set-sttLangInput", "set-sttSettingsMsg"):
+        assert f'id="{el_id}"' in panel, el_id
+        assert f"'{el_id}'" in SPEECH_JS, el_id
+    assert '<option value="local">Local Whisper' in panel
+    assert "id: 'speech'" in REGISTRY
