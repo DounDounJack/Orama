@@ -46,12 +46,12 @@ if getattr(sys, 'frozen', False):
         global splash_root
         try:
             splash_root = tk.Tk()
-            splash_root.title("Odysseus")
+            splash_root.title("Doun Industries")
             splash_root.overrideredirect(True)
-            splash_root.configure(bg="#1a1c23")
+            splash_root.configure(bg="#0a0a0a")
 
             # Accented borders
-            splash_root.config(highlightbackground="#e06c75", highlightcolor="#e06c75", highlightthickness=1)
+            splash_root.config(highlightbackground="#ff7a1a", highlightcolor="#ff7a1a", highlightthickness=1)
 
             w, h = 360, 160
             ws = splash_root.winfo_screenwidth()
@@ -60,9 +60,9 @@ if getattr(sys, 'frozen', False):
             y = (hs - h) // 2
             splash_root.geometry(f"{w}x{h}+{x}+{y}")
 
-            tk.Label(splash_root, text="⛵ Odysseus", font=("Segoe UI", 22, "bold"), bg="#1a1c23", fg="#e06c75").pack(pady=(22, 2))
-            tk.Label(splash_root, text="Launching background services...", font=("Segoe UI", 10), bg="#1a1c23", fg="#d1d4e0").pack(pady=2)
-            tk.Label(splash_root, text="Please wait, this will take a few seconds.", font=("Segoe UI", 8, "italic"), bg="#1a1c23", fg="#5c6370").pack(pady=(12, 0))
+            tk.Label(splash_root, text="Doun Industries", font=("Segoe UI", 22, "bold"), bg="#0a0a0a", fg="#ff7a1a").pack(pady=(22, 2))
+            tk.Label(splash_root, text="Launching background services...", font=("Segoe UI", 10), bg="#0a0a0a", fg="#d1d4e0").pack(pady=2)
+            tk.Label(splash_root, text="Please wait, this will take a few seconds.", font=("Segoe UI", 8, "italic"), bg="#0a0a0a", fg="#5c6370").pack(pady=(12, 0))
 
             splash_root.attributes("-topmost", True)
             splash_root.mainloop()
@@ -78,8 +78,8 @@ def create_tray_image():
     from PIL import Image, ImageDraw
     image = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
     dc = ImageDraw.Draw(image)
-    accent_red = (224, 108, 117, 255)
-    light_red = (224, 108, 117, 150)
+    accent_red = (255, 122, 26, 255)
+    light_red = (255, 122, 26, 150)
 
     # Draw premium sailing boat
     dc.polygon([(32, 10), (32, 45), (12, 45)], fill=accent_red)
@@ -102,13 +102,13 @@ def setup_system_tray(url):
         import pystray
         icon_img = create_tray_image()
         menu = (
-            pystray.MenuItem('Open Odysseus', lambda icon, item: on_open_browser(icon, item, url), default=True),
+            pystray.MenuItem('Open Doun Industries', lambda icon, item: on_open_browser(icon, item, url), default=True),
             pystray.MenuItem('Exit', on_exit)
         )
         tray_icon = pystray.Icon(
             "Odysseus",
             icon_img,
-            "Odysseus",
+            "Doun Industries",
             menu
         )
         tray_icon.run()

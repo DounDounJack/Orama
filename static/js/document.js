@@ -5333,8 +5333,8 @@ import { attachColorPicker } from './colorPicker.js?v=20260910eyedropper1';
       _afterOdysseusAttachmentsAdded(1, label || data.filename);
       if (!opts.keepOpen) _closeOdysseusAttachMenu();
     } catch (err) {
-      console.error('Failed to attach Odysseus item:', err);
-      if (uiModule) uiModule.showError('Failed to attach from Odysseus');
+      console.error('Failed to attach Doun Industries item:', err);
+      if (uiModule) uiModule.showError('Failed to attach from Doun Industries');
     }
   }
 
@@ -5382,8 +5382,8 @@ import { attachColorPicker } from './colorPicker.js?v=20260910eyedropper1';
       _afterOdysseusAttachmentsAdded(added, zip ? 'odysseus-attachments.zip' : undefined);
       _closeOdysseusAttachMenu();
     } catch (err) {
-      console.error('Failed to attach selected Odysseus items:', err);
-      if (uiModule) uiModule.showError(added ? `Attached ${added}, then failed` : 'Failed to attach from Odysseus');
+      console.error('Failed to attach selected Doun Industries items:', err);
+      if (uiModule) uiModule.showError(added ? `Attached ${added}, then failed` : 'Failed to attach from Doun Industries');
       _renderComposeAttachments();
     } finally {
       if (btn) {
@@ -5462,7 +5462,7 @@ import { attachColorPicker } from './colorPicker.js?v=20260910eyedropper1';
       }
       _syncOdysseusAttachSelection(menu);
     } catch (err) {
-      console.error('Failed to load Odysseus attach items:', err);
+      console.error('Failed to load Doun Industries attach items:', err);
       list.innerHTML = '<div class="email-odysseus-attach-empty">Could not load</div>';
     }
   }

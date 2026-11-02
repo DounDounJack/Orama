@@ -15,7 +15,7 @@
  * tests/test_css_computed_style_snapshot.py fail if that drifts.
  */
 /* ============================================ */
-/* Odysseus UI — Consolidated Stylesheet        */
+/* Doun Industries UI — Consolidated Stylesheet */
 /* ============================================ */
 
 
@@ -33,11 +33,13 @@
 
 :root {
   /* Core palette */
-  --bg: #282c34;
-  --fg: #9cdef2;
-  --panel: #111;
-  --border: #355a66;
-  --red: #e06c75;
+  /* Doun Industries: jet black + orange. Must match THEMES.doun in theme.js
+     (the default preset) so first paint has no flash of another palette. */
+  --bg: #0a0a0a;
+  --fg: #ececec;
+  --panel: #121212;
+  --border: #2f2a26;
+  --red: #ff7a1a;
   /* Were `var(--green)` / `var(--warn)` — self-referential, so they
      resolved to invalid and every site fell back to its own literal
      (or, for sites with no fallback, painted as transparent/inherit).
@@ -46,8 +48,8 @@
   --warn: #f0ad4e;
 
   /* Syntax highlighting */
-  --hl-bg: #1e2228;
-  --hl-fg: #9cdef2;
+  --hl-bg: #141414;
+  --hl-fg: #ececec;
   --hl-keyword: #c678dd;
   --hl-string: #e5c07b;
   --hl-comment: #828997;
@@ -67,12 +69,12 @@
   --color-recording-hover: #d63031;
   --color-muted: #888;
   --color-muted-alt: #6b7280;
-  --color-accent: #00aaff;
+  --color-accent: #ff7a1a;
   --color-agent-active: #00ff00;
   --color-brand-blue: #3b82f6;
   --color-blind-orange: #ff9800;
   --color-save-green: var(--color-success);
-  --color-link-hover: #66c7ff;
+  --color-link-hover: #ffa25c;
   --color-subheader: #6b8a94;
   --select-bg: var(--bg);
   --select-fg: var(--fg);

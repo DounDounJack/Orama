@@ -60,6 +60,7 @@ import { initKeyboardShortcuts } from './js/keyboard-shortcuts.js?v=20260829chat
 import { getSettings } from './js/appConfig.js';
 import { initSidebarLayout, syncRailSide } from './js/sidebar-layout.js?v=20260910sidebarbounce1';
 import { initSectionCollapse, initSectionDrag } from './js/section-management.js';
+import './js/objectDetection.js';
 
 const API_BASE = window.location.origin;
 window.themeModule = themeModule;
@@ -566,7 +567,7 @@ function initializeEventListeners() {
       e.stopPropagation();
       exportMenu.classList.remove('open');
       const meta = sessionModule.getSessions().find(s => s.id === sessionModule.getCurrentSessionId());
-      const sessionName = meta ? meta.name : 'Odysseus Chat';
+      const sessionName = meta ? meta.name : 'Doun Industries Chat';
       const originalTitle = document.title;
       document.title = sessionName;
       const chatHistory = document.getElementById('chat-history');
@@ -2458,7 +2459,7 @@ function initializeEventListeners() {
 	        textarea.setAttribute('placeholder', 'Swipe to toggle plan');
 	        return;
 	      }
-	      textarea.setAttribute('placeholder', width < PLACEHOLDER_COMPACT_WIDTH ? 'Message...' : 'Message Odysseus...');
+	      textarea.setAttribute('placeholder', width < PLACEHOLDER_COMPACT_WIDTH ? 'Message...' : 'Message Doun Industries...');
 	    }
 
 	    if (_isMobile && textarea && !textarea._odysseusPlanPlaceholderHint) {
@@ -3838,6 +3839,7 @@ function startOdysseusApp() {
     'rail-archive':   'tool-library-btn',
     'rail-memory':    'tool-memory-btn',
     'rail-notes':     'tool-notes-btn',
+    'rail-objdetect': 'tool-objdetect-btn',
     'rail-skills':    'tool-skills-btn',
     'rail-tasks':     'tool-tasks-btn',
     'rail-theme':     'tool-theme-btn',

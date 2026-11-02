@@ -74,6 +74,7 @@ const PRECACHE = [
   '/static/js/tourHints.js',
   '/static/js/fileHandler.js?v=20260909mobileattachmentedit1',
   '/static/js/voiceRecorder.js',
+  '/static/js/objectDetection.js',
   '/static/js/actionMenuOrder.js',
   '/static/js/platform.js',
   '/static/js/modelSort.js',

@@ -2497,7 +2497,7 @@ export function openEmailLibrary(opts = {}) {
               <button class="memory-toolbar-btn email-filter-settings-btn" id="email-lib-settings-btn" title="Email settings" aria-label="Email settings" aria-expanded="false">
                 ${_EMAIL_SETTINGS_ICON}
               </button>
-              <button class="memory-toolbar-btn email-reminders-clear-btn hidden" id="email-reminders-clear-btn" title="Permanently delete Odysseus reminder emails">
+              <button class="memory-toolbar-btn email-reminders-clear-btn hidden" id="email-reminders-clear-btn" title="Permanently delete Doun Industries reminder emails">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 Clear
               </button>
@@ -2766,7 +2766,7 @@ export function openEmailLibrary(opts = {}) {
   document.addEventListener('click', state._emailSearchOptionsDismiss);
   _syncSearchOptionsMenu();
   document.getElementById('email-reminders-clear-btn')?.addEventListener('click', async () => {
-    const ok = await styledConfirm('Permanently delete all Odysseus reminder emails?', {
+    const ok = await styledConfirm('Permanently delete all Doun Industries reminder emails?', {
       confirmText: 'Delete',
       cancelText: 'Cancel',
       danger: true,
