@@ -244,7 +244,7 @@ def searxng_health(settings: Dict[str, Any],
     the host answered). No search query is run. The configured instance is
     probed in full, but only its sanitized form is returned in `meta`.
     """
-    provider = (settings.get("search_provider") or "searxng")
+    provider = (settings.get("search_provider") or "duckduckgo")
     if provider != "searxng":
         return _svc("searxng", DISABLED,
                     f"Search provider is '{provider}', not SearXNG.",

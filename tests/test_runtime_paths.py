@@ -2,7 +2,7 @@ import os
 import sys
 from unittest import mock
 import pytest
-from src.runtime_paths import get_app_root, get_default_data_dir
+from src.runtime_paths import get_app_root, get_default_data_dir, get_user_data_dir
 
 
 def test_get_app_root_normal_run():
@@ -46,5 +46,16 @@ def test_get_default_data_dir_frozen():
     """Verify that get_default_data_dir resolves to a persistent user path under ~ when frozen."""
     with mock.patch.object(sys, "frozen", True, create=True):
         res = get_default_data_dir()
-        expected = os.path.join(os.path.expanduser("~"), ".odysseus", "data")
-        assert res == expected
+        assert res == get_user_data_dir()
+
+
+def test_get_user_data_dir_per_platform(monkeypatch):
+    home = os.path.expanduser("~")
+    monkeypatch.setattr(sys, "platform", "darwin")
+    assert get_user_data_dir() == os.path.join(home, "Library", "Application Support", "orama")
+    if os.name != "nt":
+        monkeypatch.setattr(sys, "platform", "linux")
+        monkeypatch.setenv("XDG_DATA_HOME", "/tmp/xdg")
+        assert get_user_data_dir() == os.path.join("/tmp/xdg", "orama")
+        monkeypatch.delenv("XDG_DATA_HOME")
+        assert get_user_data_dir() == os.path.join(home, ".local", "share", "orama")

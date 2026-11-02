@@ -48,3 +48,20 @@ def test_get_chroma_client_does_not_cache_when_unreachable(monkeypatch, closed_p
     # A failed connection must leave the singleton unset so a later call
     # (once ChromaDB is up) can succeed.
     assert cc._client is None
+
+
+def test_embedded_mode_when_no_host(monkeypatch, tmp_path):
+    chromadb = pytest.importorskip("chromadb")
+    if not hasattr(chromadb, "PersistentClient"):
+        pytest.skip("chromadb-client only")
+    cc.reset_client()
+    monkeypatch.delenv("CHROMADB_HOST", raising=False)
+    monkeypatch.setenv("CHROMADB_PATH", str(tmp_path / "chroma"))
+    try:
+        client = cc.get_chroma_client()
+        col = client.get_or_create_collection("orama_test")
+        col.add(ids=["a"], embeddings=[[0.1, 0.2, 0.3]], documents=["hello"])
+        assert col.count() == 1
+        assert (tmp_path / "chroma").is_dir()
+    finally:
+        cc.reset_client()

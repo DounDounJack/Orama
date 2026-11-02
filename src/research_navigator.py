@@ -161,7 +161,7 @@ class ResearchNavigator:
             settings = _get_search_settings()
             provider = self.search_provider or (settings.get("research_search_provider") or "").strip()
             if not provider:
-                provider = settings.get("search_provider", "searxng")
+                provider = settings.get("search_provider", "duckduckgo")
             if provider == "disabled":
                 logger.info("Search is disabled for research")
                 return []
