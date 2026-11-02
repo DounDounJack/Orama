@@ -280,4 +280,7 @@ const voiceRecorderModule = {
   set _sttProvider(v) { _sttProvider = v; },
 };
 
+// Settings → Speech updates the provider live through this global.
+try { window.voiceRecorderModule = voiceRecorderModule; } catch (_) {}
+
 export default voiceRecorderModule;

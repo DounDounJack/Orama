@@ -196,14 +196,17 @@ class TTSService:
 
     # ── Public interface ──
 
-    def synthesize(self, text: str, use_cache: bool = True) -> Optional[bytes]:
+    def synthesize(self, text: str, use_cache: bool = True,
+                   voice: Optional[str] = None, speed: Optional[float] = None) -> Optional[bytes]:
+        """Speak `text`. `voice`/`speed` override Settings for this request
+        (used by órama voice personas); otherwise Settings apply."""
         settings = self._load_settings()
         if settings.get("tts_enabled") is False:
             return None
         provider = settings["tts_provider"]
         model = settings["tts_model"]
-        voice = settings["tts_voice"]
-        speed = _safe_speed(settings.get("tts_speed", "1"))
+        voice = (voice or "").strip() or settings["tts_voice"]
+        speed = _safe_speed(speed if speed is not None else settings.get("tts_speed", "1"))
 
         if provider in ("disabled", "browser"):
             return None
@@ -240,9 +243,10 @@ class TTSService:
 
         return audio_data
 
-    def synthesize_to_base64(self, text: str) -> Optional[str]:
+    def synthesize_to_base64(self, text: str, voice: Optional[str] = None,
+                             speed: Optional[float] = None) -> Optional[str]:
         import base64
-        audio = self.synthesize(text)
+        audio = self.synthesize(text, voice=voice, speed=speed)
         if audio:
             return base64.b64encode(audio).decode("utf-8")
         return None

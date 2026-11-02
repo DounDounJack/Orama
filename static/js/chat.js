@@ -13,7 +13,7 @@ import chatStream from './chatStream.js?v=20261026devsync1';
 import { addAITTSButton } from './tts-ai.js';
 import markdownModule from './markdown.js';
 import spinnerModule from './spinner.js';
-import presetsModule from './presets.js?v=20260908personaname1';
+import presetsModule from './presets.js?v=20261102voice1';
 import fileHandlerModule from './fileHandler.js?v=20260909mobileattachmentedit1';
 import searchModule from './search.js';
 import documentModule from './document.js?v=20260916docctx2';

@@ -835,6 +835,10 @@ app.include_router(setup_chatgpt_subscription_routes())
 from routes.tts_routes import setup_tts_routes
 app.include_router(setup_tts_routes(tts_service))
 
+# Voice assistant personalities (órama)
+from routes.voice_routes import setup_voice_routes
+app.include_router(setup_voice_routes(tts_service))
+
 # STT
 from services.stt import get_stt_service
 stt_service = get_stt_service()

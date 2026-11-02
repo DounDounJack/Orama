@@ -6,7 +6,7 @@ import markdownModule from './markdown.js';
 import chatRenderer from './chatRenderer.js?v=20260914metricssummary1';
 import spinnerModule from './spinner.js';
 import { providerLogo } from './providers.js';
-import { PROMPT_TEMPLATES, getUserTemplates } from './presets.js?v=20260908personaname1';
+import { PROMPT_TEMPLATES, getUserTemplates } from './presets.js?v=20261102voice1';
 import { sortModelObjects } from './modelSort.js';
 import Storage from './storage.js';
 

@@ -70,7 +70,7 @@ DEFAULT_SETTINGS = {
     "stt_provider": "disabled",
     "stt_model": "base",
     "stt_language": "",
-    "search_provider": "searxng",
+    "search_provider": "duckduckgo",
     # Default fallback chain — when the primary provider fails or
     # rate-limits, we try DuckDuckGo next. Free, no API key required, so
     # safe to ship on by default for every user.

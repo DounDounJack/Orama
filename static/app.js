@@ -8,7 +8,7 @@ import workspaceModule from './js/workspace.js';
 import fileHandlerModule from './js/fileHandler.js?v=20260909mobileattachmentedit1';
 import modelsModule from './js/models.js';
 import ragModule from './js/rag.js';
-import presetsModule from './js/presets.js?v=20260908personaname1';
+import presetsModule from './js/presets.js?v=20261102voice1';
 import searchModule from './js/search.js';
 import chatModule from './js/chat.js?v=20260917toolttft1';
 import compareModule from './js/compare/index.js?v=20260909mobilepaneaddscroll1';

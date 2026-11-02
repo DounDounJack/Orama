@@ -2210,7 +2210,7 @@ async function initReminderSettings() {
     const personaSel = el('set-reminder-llm-persona');
     if (personaSel) {
       try {
-        const presetsMod = await import('./presets.js?v=20260908personaname1');
+        const presetsMod = await import('./presets.js?v=20261102voice1');
         const tpl = presetsMod.PROMPT_TEMPLATES || [];
         const chars = tpl.filter(t => t.isCharacter);
         for (const c of chars) {

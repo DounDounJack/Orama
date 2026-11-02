@@ -1,0 +1,174 @@
+# Builds the órama desktop app for Windows and Linux.
+#
+# Runs when started by hand (Actions tab → "Desktop builds" → Run workflow)
+# or when a version tag like v0.2.0 is pushed. A tag also publishes a GitHub
+# pre-release with the installers attached.
+#
+# Each build freezes the engine with PyInstaller, checks that the frozen
+# engine starts and answers (desktop/engine/smoke_test.py), packages the Tauri
+# app, then installs the package and checks the installed engine too.
+#
+# The Mac .dmg is built on the Mac with desktop/build-mac.sh (macOS runners
+# cost 10x the free minutes).
+name: Desktop builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Ubuntu 22.04 so the .deb and AppImage run on Linux Mint 21 and 22.
+          - name: linux
+            os: ubuntu-22.04
+            bundles: deb,appimage
+          - name: windows
+            os: windows-latest
+            bundles: nsis
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux system packages
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
+            libssl-dev libxdo-dev build-essential file libfuse2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            desktop/engine/requirements-desktop.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Build the engine
+        run: ORAMA_PYTHON="$(which python)" ./desktop/build-engine.sh
+
+      - name: Test the engine
+        run: |
+          exe=desktop/engine/dist/orama-engine/orama-engine
+          [ "$RUNNER_OS" = "Windows" ] && exe="$exe.exe"
+          python desktop/engine/smoke_test.py "$exe"
+
+      - name: Put the engine in the app
+        run: |
+          rm -rf desktop/src-tauri/resources/engine
+          mkdir -p desktop/src-tauri/resources/engine
+          cp -R desktop/engine/dist/orama-engine desktop/src-tauri/resources/engine/orama-engine
+
+      - name: Build the app
+        working-directory: desktop/src-tauri
+        env:
+          CI: "true"
+        run: npx --yes @tauri-apps/cli@2 build --bundles ${{ matrix.bundles }}
+
+      - name: Collect installers
+        run: |
+          version=$(python -c "import json;print(json.load(open('desktop/src-tauri/tauri.conf.json'))['version'])")
+          bundle=desktop/src-tauri/target/release/bundle
+          mkdir -p out
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            cp "$(ls $bundle/deb/*.deb | head -1)" "out/orama_${version}_amd64.deb"
+            cp "$(ls $bundle/appimage/*.AppImage | head -1)" "out/orama_${version}_amd64.AppImage"
+            chmod +x out/*.AppImage
+          else
+            cp "$(ls $bundle/nsis/*.exe | head -1)" "out/orama_${version}_x64-setup.exe"
+          fi
+          ls -la out
+
+      - name: Install and test (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          deb=$(ls out/*.deb)
+          pkg=$(dpkg-deb -f "$deb" Package)
+          echo "Package name: $pkg"
+          sudo apt-get install -y "./$deb"
+          exe=$(dpkg -L "$pkg" | grep '/orama-engine/orama-engine$' | head -1)
+          echo "Installed engine: $exe"
+          python desktop/engine/smoke_test.py "$exe"
+          echo "--- AppImage ---"
+          mkdir -p /tmp/appimage && cd /tmp/appimage
+          "$GITHUB_WORKSPACE"/out/*.AppImage --appimage-extract >/dev/null
+          exe=$(find /tmp/appimage/squashfs-root -path '*/orama-engine/orama-engine' -type f | head -1)
+          echo "AppImage engine: $exe"
+          python "$GITHUB_WORKSPACE/desktop/engine/smoke_test.py" "$exe"
+
+      - name: Install and test (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          installer=$(cygpath -w "$(ls out/*.exe)")
+          powershell -NoProfile -Command "Start-Process -Wait -FilePath '$installer' -ArgumentList '/S'"
+          exe=$(find "$(cygpath "$LOCALAPPDATA")" -path '*orama-engine/orama-engine.exe' -type f 2>/dev/null | head -1)
+          echo "Installed engine: $exe"
+          [ -n "$exe" ] || { echo "Installed engine not found"; exit 1; }
+          python desktop/engine/smoke_test.py "$(cygpath -w "$exe")"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orama-${{ matrix.name }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    name: Publish pre-release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -la out
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            cat > notes.md <<'EOF'
+          Test build of the órama desktop app.
+
+          - Windows: `orama_*_x64-setup.exe`
+          - Linux (Mint 21/22, Ubuntu 22.04+): `orama_*_amd64.deb` or `orama_*_amd64.AppImage`
+          - Mac (Apple Silicon): `orama_*_aarch64.dmg`, added separately
+
+          Not signed, so Windows and macOS will warn the first time you open it.
+          EOF
+            gh release create "$TAG" --prerelease --title "órama $TAG" --notes-file notes.md --verify-tag
+          fi
+          gh release upload "$TAG" out/* --clobber

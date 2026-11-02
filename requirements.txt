@@ -14,6 +14,10 @@ pypdfium2
 # Pillow 13 fixes known image-processing advisories; keep local embeddings compatible.
 Pillow>=13.0.0
 faster-whisper
+# PyAV 19 dropped av.open(metadata_errors=...), which faster-whisper 1.2 still
+# passes, so local speech-to-text fails on every clip. Keep below 19 until
+# faster-whisper catches up.
+av<19
 pdfplumber
 beautifulsoup4
 charset-normalizer

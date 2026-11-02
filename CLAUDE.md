@@ -54,6 +54,21 @@ All listed in `DOUN-SETUP.md` → "What changed from Odysseus". In short:
   pull can never swap in upstream's published image.
 - Upstream's `.github/` folder (their CI, deploy, bots) was left out on
   purpose.
+- **Voice assistant:** Voice tab in the persona window (`static/js/voiceProfiles.js`,
+  markup in `static/index.html`, hooked into `static/js/presets.js`). Profiles
+  live on personas/templates as `voice` (`src/voice_profiles.py`: model, prompt
+  builder, starter styles Steward/Sunny/Brief/Mentor; `routes/voice_routes.py`).
+  `/api/tts/synthesize` takes an optional `voice`/`speed`; `tts-ai.js` uses the
+  active persona's voice via `window.oramaGetActiveVoice`. Talk mode is
+  `static/js/talkMode.js` (button `#talk-mode-btn`). Starter styles must stay
+  original: nothing named after or copying a film/TV/book character.
+  Local Kokoro TTS needs CUDA, so on the Mac use the system voices (Settings →
+  Speech → Browser) or an API voice; speech-to-text there should be Local
+  (Whisper), since the app window has no browser speech recognition.
+- **UI testing without Node:** Playwright for Python works in `.venv`
+  (`pip install playwright && python -m playwright install chromium`); use
+  `bypass_csp=True` on the browser context, because the app's CSP blocks
+  Playwright's string evaluation.
 
 ## Rules
 
@@ -118,11 +133,14 @@ folder. Odysseus already runs natively on Apple Silicon (`website/setup.md`,
 
 ### Phase 1: Mac desktop app
 
-- [ ] Tauri project in `desktop/`
-- [ ] Engine runs natively without Docker (embedded Chroma, DuckDuckGo search, no ntfy)
-- [ ] Engine packaged with PyInstaller as a Tauri sidecar
-- [ ] Tauri starts/stops the engine (random port + token), opens the window when ready
-- [ ] Data in the user's home folder
+- [x] Tauri project in `desktop/`
+- [x] Engine runs natively without Docker (embedded Chroma, DuckDuckGo search, no ntfy)
+- [x] Engine packaged with PyInstaller as a Tauri sidecar
+- [x] Tauri starts/stops the engine (random port + token), opens the window when ready
+- [x] Data in the user's home folder
+
+Built on branch `desktop-app`; see `desktop/README.md`. Waiting on the
+owner's test from the Applications folder.
 
 Done when: órama opens from the Mac's Applications folder (or Dock) in its
 own window, with no Docker and no terminal. Unsigned is fine for their own use
@@ -130,9 +148,13 @@ own window, with no Docker and no terminal. Unsigned is fine for their own use
 
 ### Phase 2: Linux, Windows and installers
 
-- [ ] GitHub Actions workflow that builds the Linux .deb/AppImage on an
-  Ubuntu runner and the Windows installer on a Windows runner (PyInstaller
-  can't cross-compile). Upstream's `.github/` isn't in this repo; write a new one
+- [x] GitHub Actions workflow that builds the Linux .deb/AppImage on an
+  Ubuntu 22.04 runner and the Windows installer (NSIS .exe) on a Windows
+  runner: `.github/workflows/desktop.yml`. Runs by hand or on a `v*` tag; a
+  tag publishes a pre-release. On Linux the package is named `orama`
+  (`desktop/src-tauri/tauri.linux.conf.json`). Manual runs need the workflow
+  on `main`. Private repo: keep an eye on the free Actions minutes (Windows
+  counts double).
 - [ ] Owner tests the Linux build on the Surface (Linux Mint 22)
 - [ ] First-run screen: create login, paste an API key
 - [ ] Auto-updates from GitHub releases

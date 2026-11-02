@@ -24,6 +24,30 @@ export async function initTtsSettings() {
   function getModel() { return isEndpoint() ? modelSelect.value : modelInput.value; }
   function getVoice() { return isEndpoint() ? voiceSelect.value : voiceInput.value; }
 
+  // System voices: offer the computer's own voices as suggestions (órama).
+  function fillSystemVoices() {
+    var list = el('set-ttsSystemVoices');
+    if (!list || !('speechSynthesis' in window)) return;
+    var render = function() {
+      var voices = window.speechSynthesis.getVoices() || [];
+      var lang = (navigator.language || 'en').slice(0, 2);
+      voices = voices.slice().sort(function(a, b) {
+        var am = a.lang.indexOf(lang) === 0 ? 0 : 1, bm = b.lang.indexOf(lang) === 0 ? 0 : 1;
+        return am - bm || a.name.localeCompare(b.name);
+      });
+      list.innerHTML = '';
+      voices.forEach(function(v) {
+        var opt = document.createElement('option');
+        opt.value = v.name; opt.label = v.name + ' (' + v.lang + ')';
+        list.appendChild(opt);
+      });
+    };
+    render();
+    if (!window.speechSynthesis.getVoices().length) {
+      window.speechSynthesis.addEventListener('voiceschanged', render, { once: true });
+    }
+  }
+
   function updateVisibility() {
     var prov = provSel.value;
     modelRow.style.display = prov.startsWith('endpoint:') ? 'flex' : 'none';
@@ -35,6 +59,12 @@ export async function initTtsSettings() {
     } else {
       modelSelect.style.display = 'none'; modelInput.style.display = '';
       voiceSelect.style.display = 'none'; voiceInput.style.display = prov === 'disabled' ? 'none' : '';
+    }
+    if (prov === 'browser') {
+      voiceInput.placeholder = 'System default voice (or pick one)';
+      fillSystemVoices();
+    } else if (prov === 'local') {
+      voiceInput.placeholder = 'af_heart';
     }
   }
 
@@ -239,7 +269,15 @@ export async function initSttSettings() {
     } catch (e) { sttMsg.textContent = e.status === 403 ? 'Admin access is required to change these settings.' : 'Failed to save'; sttMsg.style.color = 'var(--red)'; }
   }
 
-  provSel.addEventListener('change', function() { updateVisibility(); saveSTT(); });
+  provSel.addEventListener('change', function() {
+    // Picking a provider means you want speech-to-text on.
+    if (sttEnabledToggle && provSel.value !== 'disabled' && !sttEnabledToggle.checked) {
+      sttEnabledToggle.checked = true;
+      syncSttDisabled();
+    }
+    updateVisibility();
+    saveSTT();
+  });
   modelSelect.addEventListener('change', saveSTT);
   modelInput.addEventListener('change', saveSTT);
   langInput.addEventListener('change', saveSTT);

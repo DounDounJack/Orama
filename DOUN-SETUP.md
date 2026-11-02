@@ -114,6 +114,18 @@ fixes means copying them over by hand.
   a Mac-only font before). `static/js/theme.js`.
 - **Docker image:** named `orama:local` instead of the official Odysseus image,
   so it's always built from this folder (`docker-compose*.yml`).
+- **Voice assistant:** a Voice tab in the persona window gives a persona a
+  speaking style (what it calls you, formal or casual, short or chatty,
+  humour, favourite phrases, words it never says) and its own voice and
+  speed. It writes the system prompt from those settings. Four starter
+  styles: Steward (formal butler), Sunny, Brief and Mentor. Code:
+  `src/voice_profiles.py`, `routes/voice_routes.py`, `static/js/voiceProfiles.js`.
+- **Talk mode:** the waveform button next to the mic opens a voice screen.
+  Hold Space to talk (or switch to hands-free), and the reply is read aloud in
+  the persona's voice. Uses the speech settings in Settings → Speech.
+  Code: `static/js/talkMode.js`.
+- **Desktop app:** `desktop/` builds órama as its own Mac app (no Docker).
+  See `desktop/README.md`.
 - **Repo:** upstream's `.github` folder (their CI, website deploy and bots)
   isn't included. Odysseus's own README is in `ODYSSEUS-README.md`.
 

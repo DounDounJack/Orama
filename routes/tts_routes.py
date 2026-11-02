@@ -5,7 +5,9 @@ TTS API routes — multi-provider (local Kokoro, API endpoint, browser).
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
-from pydantic import BaseModel
+from typing import Optional
+
+from pydantic import BaseModel, Field
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,6 +15,9 @@ logger = logging.getLogger(__name__)
 class TTSRequest(BaseModel):
     text: str
     format: str = "audio"  # "audio" or "base64"
+    # Optional per-request voice and speed (órama voice personas).
+    voice: Optional[str] = Field(None, max_length=80, pattern=r"^[\w .()'\-]*$")
+    speed: Optional[float] = Field(None, ge=0.5, le=2.0)
 
 def setup_tts_routes(tts_service):
     """Setup TTS routes with the provided TTS service"""
@@ -38,7 +43,8 @@ def setup_tts_routes(tts_service):
                 )
             
             if request.format == "base64":
-                audio_b64 = tts_service.synthesize_to_base64(request.text)
+                audio_b64 = tts_service.synthesize_to_base64(
+                    request.text, voice=request.voice, speed=request.speed)
                 if not audio_b64:
                     raise HTTPException(
                         status_code=500,
@@ -47,7 +53,8 @@ def setup_tts_routes(tts_service):
                 return {"audio": audio_b64}
             
             else:  # audio format
-                audio_data = tts_service.synthesize(request.text)
+                audio_data = tts_service.synthesize(
+                    request.text, voice=request.voice, speed=request.speed)
                 if not audio_data:
                     raise HTTPException(
                         status_code=500,

@@ -1,0 +1,9 @@
+# Extra packages for the órama desktop engine, installed on top of the main
+# requirements.txt (minus chromadb-client; see desktop/build-engine.sh).
+# Full chromadb runs the vector store inside the engine, no server needed.
+# It conflicts with chromadb-client, so never install both.
+chromadb
+# DuckDuckGo search library (the default search; falls back to HTML scraping
+# without it).
+ddgs
+pyinstaller

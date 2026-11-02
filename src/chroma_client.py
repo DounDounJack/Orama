@@ -1,8 +1,17 @@
 """
 chroma_client.py
 
-Singleton ChromaDB HTTP client.
-Connects to a ChromaDB instance running as a standalone service.
+Singleton ChromaDB client.
+
+Two modes:
+- Server mode: when CHROMADB_HOST is set (the Docker setup sets it), connect
+  to a standalone ChromaDB service over HTTP.
+- Embedded mode (órama desktop app and plain native runs): when CHROMADB_HOST
+  is not set and the full `chromadb` package is installed, keep the vector
+  store on disk under the data folder (DATA_DIR/chroma). No server needed.
+
+If CHROMADB_HOST is unset and only `chromadb-client` is installed (it can't
+run embedded), fall back to a server on localhost:8100 as before.
 """
 
 import os
@@ -46,6 +55,12 @@ def get_chroma_client():
             "dependency with: pip install chromadb-client"
         ) from e
 
+    if not os.getenv("CHROMADB_HOST", "").strip():
+        embedded = _embedded_client(chromadb)
+        if embedded is not None:
+            _client = embedded
+            return _client
+
     host = os.getenv("CHROMADB_HOST", "localhost")
     port = int(os.getenv("CHROMADB_PORT", "8100"))
 
@@ -65,6 +80,28 @@ def get_chroma_client():
     _client = client
     logger.info(f"ChromaDB connected: {host}:{port}")
     return _client
+
+
+def _embedded_path() -> str:
+    from src.constants import DATA_DIR
+    return os.getenv("CHROMADB_PATH", "").strip() or os.path.join(DATA_DIR, "chroma")
+
+
+def _embedded_client(chromadb):
+    """Return an on-disk ChromaDB client, or None if this install can't do it."""
+    try:
+        from chromadb.config import Settings
+        path = _embedded_path()
+        os.makedirs(path, exist_ok=True)
+        client = chromadb.PersistentClient(
+            path=path, settings=Settings(anonymized_telemetry=False)
+        )
+        client.heartbeat()
+    except Exception as e:  # chromadb-client only, or a broken store
+        logger.info(f"Embedded ChromaDB unavailable ({e}); trying a ChromaDB server")
+        return None
+    logger.info(f"ChromaDB embedded store: {path}")
+    return client
 
 
 def reset_client():
