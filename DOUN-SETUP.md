@@ -24,10 +24,12 @@ Log out and back in so the group change takes effect.
 
 ## 2. Start it
 
-Unzip the folder somewhere (e.g. your home folder), then:
+Download it from GitHub (or unzip a copy you were given), then go into the
+folder:
 
 ```bash
-cd doun-industries
+git clone https://github.com/DounDounJack/Orama.git orama
+cd orama
 cp .env.example .env
 docker compose up -d --build
 ```
@@ -73,20 +75,22 @@ docker compose up -d           # start it again
 docker compose logs -f odysseus  # watch the logs
 ```
 
-## Getting Odysseus updates later
+## Getting updates
 
-This folder is a git repo on a branch called `doun-industries`. To pull in
-upstream fixes:
+When there are new órama changes on GitHub:
 
 ```bash
-git fetch --unshallow origin     # first time only
-git fetch origin
-git merge origin/dev
+cd orama
+git pull
 docker compose up -d --build
 ```
 
-If a merge clashes, it'll usually be in `static/index.html` or
-`static/js/theme.js`.
+Your chats, settings and login live in the `data` folder, which isn't part of
+the repo, so updating never touches them.
+
+Newer Odysseus versions don't come through automatically. This repo started
+from a snapshot of Odysseus (commit `8450793`), so bringing in later upstream
+fixes means copying them over by hand.
 
 ## What changed from Odysseus
 
@@ -106,6 +110,12 @@ If a merge clashes, it'll usually be in `static/index.html` or
   for image input, model picker and results (all disabled for now), a toggle in
   Settings → Appearance, and `/open detect`. Code: `static/js/objectDetection.js`
   and the `objdetect-modal` block in `static/index.html`.
+- **ASCII background:** fills the whole screen on Linux/Windows (it measured
+  a Mac-only font before). `static/js/theme.js`.
+- **Docker image:** named `orama:local` instead of the official Odysseus image,
+  so it's always built from this folder (`docker-compose*.yml`).
+- **Repo:** upstream's `.github` folder (their CI, website deploy and bots)
+  isn't included. Odysseus's own README is in `ODYSSEUS-README.md`.
 
 Left as Odysseus on purpose: internal code names, the AI's background
 instructions, the "Odysseus" character persona (alongside Socrates etc.),

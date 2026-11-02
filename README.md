@@ -1,107 +1,73 @@
 <p align="center">
-  <img src="assets/branding/odysseus-wordmark.png" alt="Odysseus" width="238">
+  <img src="static/icons/logo.svg" alt="órama" width="120">
 </p>
 
-<p align="center">
-  A self-hosted AI workspace for chat, agents, research, documents, email, notes, calendar, and local model workflows.
-</p>
+<h1 align="center">órama</h1>
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="website/setup.md">Setup Guide</a> ·
-  <a href="CONTRIBUTING.md">Contributing</a> ·
-  <a href="ROADMAP.md">Roadmap</a>
-</p>
-
-<p align="center">
-  <a href="https://repology.org/project/odysseus-ai/versions"><img src="https://repology.org/badge/vertical-allrepos/odysseus-ai.svg" alt="Packaging status"></a>
-</p>
-
-<p align="center">
-  <img src="assets/branding/odysseus-browser.jpg" alt="Odysseus interface">
-</p>
+<p align="center">A self-hosted AI workspace by Doun Industries.</p>
 
 ---
 
-## Quick Start
+órama is a modified version of **[Odysseus](https://github.com/odysseus-dev/odysseus)**,
+the open-source AI workspace started by Felix Kjellberg (PewDiePie) and now
+maintained by the odysseus-dev community. All the hard work is theirs. This
+repo changes the look, trims some features and adds a few of its own.
 
-> `dev` is the default branch and gets the newest changes first. Use [`main`](https://github.com/odysseus-dev/odysseus/tree/main) if you want the more curated branch.
+It's based on Odysseus as of commit
+[`8450793`](https://github.com/odysseus-dev/odysseus/commit/8450793), and was
+modified by Doun Industries in November 2026.
+
+## What's different from Odysseus
+
+- **Look:** jet black with an orange accent, the órama logo, and "Doun
+  Industries" branding in place of Odysseus. Same font.
+- **Removed:** Email, Calendar, Gallery and Tasks, including the AI tools that
+  go with them.
+- **Added:** an Object Detection section (placeholder for now).
+- **Fixed:** the ASCII background now fills the whole screen on Linux and
+  Windows.
+- **Docker:** always builds from this folder, so it can't be swapped for the
+  official Odysseus image by mistake.
+
+Everything else (chat with any model, agents, deep research, documents, notes,
+memory, skills, running models locally through Cookbook) works as it does in
+Odysseus.
+
+The full change list is in [DOUN-SETUP.md](DOUN-SETUP.md), and every change is
+in the commit history.
+
+## Install
+
+You need Docker. On Windows or Mac, install Docker Desktop first. Then:
 
 ```bash
-git clone https://github.com/odysseus-dev/odysseus.git
-cd odysseus
+git clone https://github.com/DounDounJack/Orama.git orama
+cd orama
 cp .env.example .env
 docker compose up -d --build
 ```
 
-Open `http://localhost:7011` when the containers are healthy. The first admin password is printed in `docker compose logs odysseus`.
-
-The compose files pull the official multi-arch image `ghcr.io/odysseus-dev/odysseus` (published by CI on every push to `main` and `dev`) and only build locally if the pull fails — so this also works on hosts without a build toolchain, e.g. as a [Portainer](https://www.portainer.io/) stack.
-
-**Production deployments:** pin the immutable tag instead of `:latest`. `:latest` and bare `:X.Y.Z` tags move on every push to `main`, but `:X.Y.Z-<sha>` (e.g. `1.0.2-7c8070f`) always refers to one specific build:
+The first build takes 10–20 minutes. Then get your login password:
 
 ```bash
-ODYSSEUS_IMAGE=ghcr.io/odysseus-dev/odysseus:1.0.2-7c8070f docker compose up -d
+docker compose logs odysseus | grep -i password
 ```
 
-Native installs, GPU notes, Windows/macOS instructions, HTTPS, and configuration live in the [setup guide](website/setup.md).
+Open http://localhost:7011, log in, and add a model under
+**Settings → Add Models** (Anthropic, OpenAI, Google, OpenRouter, or a local
+model through Cookbook or Ollama).
 
-## Features
+More detail, including Windows and Mac notes, is in [DOUN-SETUP.md](DOUN-SETUP.md).
 
-- **Chat + Agents** — local/API models, tools, MCP, files, shell, skills, and memory.
-- **Cookbook** — hardware-aware model recommendations, downloads, and serving.
-- **Deep Research** — multi-step web research with source reading and report generation.
-- **Compare** — blind side-by-side model testing and synthesis.
-- **Documents** — writing-first editor with AI edits, suggestions, Markdown, HTML, CSV, and syntax highlighting.
-- **Email** — IMAP/SMTP inbox with triage, tags, summaries, reminders, and reply drafts.
-- **Notes, Tasks + Calendar** — reminders, todos, scheduled agent tasks, and CalDAV sync.
-- **Extras** — gallery/image editor, themes, uploads, web search, presets, sessions, and 2FA.
+## Credits and licence
 
-## Demo
+- Odysseus by Felix Kjellberg and the odysseus-dev contributors:
+  https://github.com/odysseus-dev/odysseus
+- Third-party code, fonts and libraries are credited in
+  [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md), with licences in [`licenses/`](licenses/).
+- Odysseus's original README is kept in [ODYSSEUS-README.md](ODYSSEUS-README.md).
 
-A full hover-to-play tour lives on the [Odysseus landing page](https://odysseus-dev.github.io/odysseus/). Its source lives under [`website/`](website/).
-
-## Contributing
-
-Help is welcome. The best entry points are fresh-install testing, provider setup bugs, mobile/editor polish, docs, and small focused refactors. See [CONTRIBUTING.md](CONTRIBUTING.md) and [ROADMAP.md](ROADMAP.md).
-
-## Security
-
-Odysseus is a self-hosted workspace with powerful local tools. Keep auth enabled, keep private data out of Git, and do not expose raw model/service ports publicly.
-
-- Keep `AUTH_ENABLED=true` for any network-accessible deployment.
-- Keep `LOCALHOST_BYPASS=false` outside local development.
-
-Deployment details are in the [setup guide](website/setup.md#security-notes).
-
-## Community & Growth
-
-<p align="center">
-  <a href="https://trendshift.io/repositories/43167">
-      <a href="https://trendshift.io/repositories/43167?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-43167" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/43167/monthly" alt="odysseus-dev%2Fodysseus | Trendshift" width="230"/></a>
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://star-history.dera.page/#odysseus-dev/odysseus&type=date&legend=top-left">
-    <picture>
-      <source
-        media="(prefers-color-scheme: dark)"
-        srcset="https://star-history.dera.page/svg?repos=odysseus-dev/odysseus&type=date&theme=dark&legend=top-left"
-      />
-      <source
-        media="(prefers-color-scheme: light)"
-        srcset="https://star-history.dera.page/svg?repos=odysseus-dev/odysseus&type=date&legend=top-left"
-      />
-      <img
-        src="https://star-history.dera.page/svg?repos=odysseus-dev/odysseus&type=date&legend=top-left"
-        alt="Odysseus GitHub star history"
-        width="100%"
-      />
-    </picture>
-  </a>
-</p>
-
-## License
-
-AGPL-3.0-or-later -- see [LICENSE](LICENSE) and [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md).
+órama is licensed under the **GNU Affero General Public License v3.0 or later**,
+the same as Odysseus. See [LICENSE](LICENSE). If you run a modified version for
+other people over a network, the licence requires you to offer them its source
+code.

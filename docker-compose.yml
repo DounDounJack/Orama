@@ -1,14 +1,9 @@
 services:
   odysseus:
-    # Official multi-arch GHCR image (linux/amd64 + linux/arm64), published by
-    # the "ci / docker publish" workflow on every push to main and dev.
-    # Docker pulls this image when it is reachable, and only falls back to the
-    # local build below when the pull fails (e.g. no network on the host), so
-    # hosts without a build toolchain (Portainer stacks, etc.) get the
-    # registry build. For production, pin an immutable tag via ODYSSEUS_IMAGE
-    # — e.g. ghcr.io/odysseus-dev/odysseus:1.0.2-7c8070f (X.Y.Z-<sha>) — since
-    # :latest and bare :X.Y.Z tags move on every main push.
-    image: ${ODYSSEUS_IMAGE:-ghcr.io/odysseus-dev/odysseus:latest}
+    # órama / Doun Industries: always built from this folder. The local-only
+    # image name means Docker can never swap in upstream Odysseus's published
+    # image (which wouldn't have the Doun changes), even on `docker compose pull`.
+    image: ${ODYSSEUS_IMAGE:-orama:local}
     build: .
     ports:
       - "${APP_BIND:-127.0.0.1}:${APP_PORT:-7011}:7000"
