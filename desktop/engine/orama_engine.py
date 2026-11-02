@@ -111,6 +111,41 @@ def main():
     server.run()
 
 
+def _run_as_python(argv) -> bool:
+    """Act like `python` when the engine re-launches itself with arguments.
+
+    In the bundled app, sys.executable is this program, not a Python
+    interpreter. The engine starts its built-in tool servers as
+    `sys.executable script.py` and runs a few `sys.executable -c ...` helpers,
+    so handle those forms here. Returns False when there's nothing to run
+    (normal engine start).
+    """
+    import runpy
+
+    args = list(argv)
+    while args and args[0] in ("-I", "-u", "-B", "-E", "-s", "-S"):
+        args.pop(0)
+    if not args:
+        return False
+    if args[0] == "-c" and len(args) >= 2:
+        sys.argv = ["-c"] + args[2:]
+        exec(compile(args[1], "<string>", "exec"), {"__name__": "__main__"})
+        return True
+    if args[0] == "-m" and len(args) >= 2:
+        sys.argv = [args[1]] + args[2:]
+        runpy.run_module(args[1], run_name="__main__", alter_sys=True)
+        return True
+    if args[0].endswith(".py") and os.path.isfile(args[0]):
+        script = os.path.abspath(args[0])
+        sys.argv = [script] + args[1:]
+        sys.path.insert(0, os.path.dirname(script))
+        runpy.run_path(script, run_name="__main__")
+        return True
+    return False
+
+
 if __name__ == "__main__":
     multiprocessing.freeze_support()
+    if getattr(sys, "frozen", False) and _run_as_python(sys.argv[1:]):
+        sys.exit(0)
     main()
