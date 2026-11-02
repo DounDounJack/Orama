@@ -330,7 +330,7 @@ export function applyColors(colors) {
 
 // Per-route SVG shape registry — kept in sync with the inline favicon
 // script in index.html so a theme change keeps the route icon, not the
-// default boat. Returns the inner SVG markup colored with `fg`.
+// default logo. Returns the inner SVG markup colored with `fg`.
 const _ROUTE_FAVICON_SHAPES = {
   '/calendar':
     "<rect x='4' y='6' width='24' height='22' rx='2' fill='none' stroke='__C__' stroke-width='2.5'/>" +
@@ -373,7 +373,7 @@ function _updateFavicon(fg) {
   if (routeShape) {
     svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>${routeShape.split('__C__').join(fg)}</svg>`;
   } else {
-    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M16 4L16 22L6 22Z' fill='${fg}'/><path d='M16 8L16 22L24 22Z' fill='${fg}' opacity='0.6'/><path d='M4 24Q10 20 16 24Q22 28 28 24' stroke='${fg}' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>`;
+    svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='97 48 1083 1083'><path fill='${fg}' fill-rule='evenodd' d='M299 276A392 392 0 0 1 996 266A443 443 0 0 1 299 276ZM374 263A334 334 0 0 1 920 260A346 346 0 0 1 374 263Z'/><path fill='${fg}' d='M644 257L644 1121L154 1121L644 313Z'/><path fill='${fg}' d='M644 313L1124 1121L644 1121Z'/><path fill='#fff' fill-opacity='0.27' d='M644 313L1124 1121L644 1121Z'/><path fill='${fg}' d='M713 168A111 111 0 1 0 738 193A49 20 132 1 1 713 168Z'/></svg>`;
   }
   const href = 'data:image/svg+xml,' + encodeURIComponent(svg);
   let link = document.querySelector("link[rel='icon']");

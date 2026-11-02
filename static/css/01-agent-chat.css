@@ -1984,6 +1984,7 @@ body.bg-pattern-ascii-fireflies {
       vertical-align: -0.15em;
       color: var(--brand-color, var(--red));
     }
+    #welcome-screen .welcome-sub:empty { display: none; }
     #welcome-screen .welcome-sub {
       font-size:0.85rem;
       color:color-mix(in srgb, var(--fg) 60%, transparent);

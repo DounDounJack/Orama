@@ -80,6 +80,9 @@ If a merge clashes, it'll usually be in `static/index.html` or
   still in the Theme panel.
 - **Name:** visible "Odysseus" text replaced with "Doun Industries" across the
   app, login page, tab titles, notifications and desktop launcher.
+- **Logo:** the órama eye-and-pyramid mark replaces the sailboat (welcome
+  screen, login, browser tab, app icons). Source: `static/icons/logo.svg`.
+  The welcome title reads "órama" and the tagline under it is gone.
 - **Object Detection:** new sidebar + icon-rail entry, a window with the layout
   for image input, model picker and results (all disabled for now), a toggle in
   Settings → Appearance, and `/open detect`. Code: `static/js/objectDetection.js`
