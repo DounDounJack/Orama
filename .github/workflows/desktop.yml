@@ -16,9 +16,6 @@ on:
   workflow_dispatch:
   push:
     tags: ["v*"]
-    # TEMPORARY while getting the builds working; removed afterwards.
-    branches: [desktop-app]
-    paths: [".github/workflows/desktop.yml", "desktop/**"]
 
 permissions:
   contents: read

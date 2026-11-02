@@ -148,9 +148,13 @@ own window, with no Docker and no terminal. Unsigned is fine for their own use
 
 ### Phase 2: Linux, Windows and installers
 
-- [ ] GitHub Actions workflow that builds the Linux .deb/AppImage on an
-  Ubuntu runner and the Windows installer on a Windows runner (PyInstaller
-  can't cross-compile). Upstream's `.github/` isn't in this repo; write a new one
+- [x] GitHub Actions workflow that builds the Linux .deb/AppImage on an
+  Ubuntu 22.04 runner and the Windows installer (NSIS .exe) on a Windows
+  runner: `.github/workflows/desktop.yml`. Runs by hand or on a `v*` tag; a
+  tag publishes a pre-release. On Linux the package is named `orama`
+  (`desktop/src-tauri/tauri.linux.conf.json`). Manual runs need the workflow
+  on `main`. Private repo: keep an eye on the free Actions minutes (Windows
+  counts double).
 - [ ] Owner tests the Linux build on the Surface (Linux Mint 22)
 - [ ] First-run screen: create login, paste an API key
 - [ ] Auto-updates from GitHub releases
