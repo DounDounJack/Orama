@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
+from src.voice_profiles import VoiceProfile
+
 
 # Request Models
 class ChatRequest(BaseModel):
@@ -111,6 +113,10 @@ class PresetUpdateRequest(BaseModel):
         max_length=40,
         pattern="^(general|health)$",
         description="Schema used by persona memory extraction"
+    )
+    voice: Optional[VoiceProfile] = Field(
+        None,
+        description="Voice assistant settings for this persona (órama)"
     )
 
 

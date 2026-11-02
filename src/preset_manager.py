@@ -145,6 +145,7 @@ Use precise language. Show causal relationships explicitly. Quantify uncertainty
         persona_memory_schema: str = "general",
         thinking_mode: str = "",
         show_persona_name: bool = True,
+        voice: dict | None = None,
     ) -> bool:
         """Update the custom preset"""
         persona_memory_schema = persona_memory_schema if persona_memory_schema in {"general", "health"} else "general"
@@ -175,6 +176,8 @@ Use precise language. Show causal relationships explicitly. Quantify uncertainty
             "enabled": enabled,
             "persona_memory": persona_memory if enabled and name else "",
             "persona_memory_schema": persona_memory_schema if enabled and name else "general",
+            # órama voice assistant settings (None = plain persona)
+            "voice": voice if enabled else None,
         }
         return self.save(self.presets)
     

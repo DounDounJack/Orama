@@ -3,12 +3,13 @@
 import asyncio
 import logging
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, Field
 
 from src.request_models import PresetUpdateRequest
+from src.voice_profiles import VoiceProfile
 from core.middleware import require_admin
 from src.auth_helpers import effective_user
 
@@ -23,6 +24,7 @@ class UserTemplateRequest(BaseModel):
     max_tokens: int = Field(0, ge=0, le=65536)
     persona_memory: str = Field("", max_length=6000)
     persona_memory_schema: str = Field("general", pattern="^(general|health)$")
+    voice: Optional[VoiceProfile] = None
 
 
 def setup_preset_routes(preset_manager) -> APIRouter:
@@ -47,6 +49,7 @@ def setup_preset_routes(preset_manager) -> APIRouter:
                 preset_update.persona_memory_schema,
                 preset_update.thinking_mode,
                 preset_update.show_persona_name,
+                voice=preset_update.voice.model_dump() if preset_update.voice else None,
             )
             if success:
                 return {"success": True, "message": "Custom preset updated"}
