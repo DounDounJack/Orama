@@ -1,10 +1,18 @@
-# Doun Industries — setup on Linux Mint
+# Doun Industries — setup
 
-This is Odysseus with the Doun Industries look: jet black with orange, same
-font, every original feature kept, plus an Object Detection section (placeholder
-for now).
+This is Odysseus with the Doun Industries look: jet black with orange, the
+órama logo, and an Object Detection section (placeholder for now). Email,
+Calendar, Gallery and Tasks are taken out.
+
+It runs in Docker, so it works on Linux, Windows or Mac.
 
 ## 1. Install Docker (once)
+
+**Windows or Mac:** install Docker Desktop from https://www.docker.com/products/docker-desktop/,
+open it, and leave it running. Then skip to step 2 and type the commands into
+PowerShell (Windows) or Terminal (Mac).
+
+**Linux (Mint / Ubuntu):**
 
 ```bash
 sudo apt update
@@ -24,10 +32,17 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-The first build takes a while. When it's done, get your admin password:
+The first build takes a while (10–20 minutes). When it's done, get your admin
+password:
 
 ```bash
 docker compose logs odysseus | grep -i password
+```
+
+On Windows PowerShell use this instead:
+
+```powershell
+docker compose logs odysseus | Select-String password
 ```
 
 Open http://localhost:7011 and log in.
