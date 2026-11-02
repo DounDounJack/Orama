@@ -10,8 +10,8 @@ const _defaultKeybinds = {
   fav_session: 'ctrl+alt+f', delete_session: 'ctrl+alt+d',
   cancel: 'escape', tts: 'alt+shift+t',
   incognito: 'ctrl+alt+i', settings: 'ctrl+,', focus_input: 'ctrl+/',
-  // Open-tool shortcuts (Calendar bound by default; rest unbound).
-  open_calendar: 'ctrl+alt+c', open_compare: '', open_cookbook: '',
+  // Open-tool shortcuts (all unbound; Calendar/Gallery/Tasks removed in Doun Industries).
+  open_calendar: '', open_compare: '', open_cookbook: '',
   open_research: '', open_gallery: '', open_library: '', open_memory: '',
   open_skills: '', open_notes: '', open_tasks: '', open_theme: '',
 };
@@ -264,16 +264,13 @@ export function initKeyboardShortcuts(modules) {
     // Open-tool shortcuts — click the sidebar tool button so each tool's
     // own open/toggle logic runs. Unbound (empty) combos never match.
     const _toolBtns = {
-      open_calendar: 'tool-calendar-btn',
       open_compare:  'tool-compare-btn',
       open_cookbook: 'tool-cookbook-btn',
       open_research: 'tool-research-btn',
-      open_gallery:  'tool-gallery-btn',
       open_library:  'tool-library-btn',
       open_memory:   'tool-memory-btn',
       open_skills:   'tool-skills-btn',
       open_notes:    'tool-notes-btn',
-      open_tasks:    'tool-tasks-btn',
       open_theme:    'tool-theme-btn',
     };
     for (const action in _toolBtns) {

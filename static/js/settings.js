@@ -1399,7 +1399,7 @@ const SHORTCUT_DEFAULTS = {
   focus_input:    'ctrl+/',
   // Open-tool shortcuts. Calendar is bound by default; the rest are
   // unbound (empty) so the user can assign their own in the panel.
-  open_calendar:  'ctrl+alt+c',
+  open_calendar:  '',
   open_compare:   '',
   open_cookbook:  '',
   open_research:  '',
@@ -1464,7 +1464,7 @@ const SHORTCUT_CATEGORIES = [
   { name: 'Navigation', keys: ['search', 'toggle_sidebar', 'focus_input', 'settings'] },
   { name: 'Sessions', keys: ['new_session', 'fav_session', 'delete_session'] },
   { name: 'Tools', keys: ['incognito', 'tts', 'cancel'] },
-  { name: 'Open Tools', keys: ['open_calendar', 'open_compare', 'open_cookbook', 'open_research', 'open_gallery', 'open_library', 'open_memory', 'open_skills', 'open_notes', 'open_tasks', 'open_theme'] },
+  { name: 'Open Tools', keys: ['open_compare', 'open_cookbook', 'open_research', 'open_library', 'open_memory', 'open_skills', 'open_notes', 'open_theme'] },
 ];
 
 function _formatKeyCaps(combo) {

@@ -1348,7 +1348,7 @@ async function _cmdToggleSidebar(args, ctx) {
 async function _cmdOpen(args, ctx) {
   const target = (args[0] || '').trim().toLowerCase();
   if (!target) {
-    slashReply('Open what? Try /open Cookbook, /open Settings, /open Gallery, /open Notes, /open Tasks, /open Library, /open Research, or /open Compare.');
+    slashReply('Open what? Try /open Cookbook, /open Settings, /open Notes, /open Library, /open Research, /open Compare, or /open Detect.');
     return true;
   }
   const clickFirst = (...ids) => {
@@ -1370,9 +1370,7 @@ async function _cmdOpen(args, ctx) {
       return true;
     }
     const targets = {
-      gallery: ['tool-gallery-btn', 'rail-gallery'],
       notes: ['tool-notes-btn', 'rail-notes'],
-      tasks: ['tool-tasks-btn', 'rail-tasks'],
       library: ['tool-library-btn', 'rail-archive'],
       documents: ['tool-library-btn', 'rail-archive'],
       docs: ['tool-library-btn', 'rail-archive'],
@@ -1481,7 +1479,7 @@ async function _cmdTheme(args, ctx) {
     const saveName = args[1].toLowerCase().replace(/\s+/g, '-');
     if (tm.THEMES[saveName]) { slashReply('Cannot overwrite a built-in theme.'); return true; }
     const s = tm.getSaved();
-    const colors = s ? s.colors : tm.THEMES.dark;
+    const colors = s ? s.colors : (tm.THEMES.doun || tm.THEMES.dark);
     tm.saveCustomTheme(saveName, colors);
     tm.save(saveName, colors);
     await typewriterReply(`Custom theme "${saveName}" saved`);
@@ -6030,26 +6028,12 @@ const COMMANDS = {
     handler: (args, ctx) => _cmdToolPanel('cookbook', args, ctx),
     usage: '/cookbook  ·  /cookbook serve qwen'
   },
-  email: {
-    alias: ['mail', 'inbox'],
-    category: 'Tools',
-    help: 'Open Email',
-    handler: (args, ctx) => _cmdToolPanel('email', args, ctx),
-    usage: '/email'
-  },
   notes: {
     alias: [],
     category: 'Tools',
     help: 'Open Notes',
     handler: (args, ctx) => _cmdToolPanel('notes', args, ctx),
     usage: '/notes'
-  },
-  tasks: {
-    alias: [],
-    category: 'Tools',
-    help: 'Open Tasks',
-    handler: (args, ctx) => _cmdToolPanel('tasks', args, ctx),
-    usage: '/tasks'
   },
   brain: {
     alias: ['memories'],
@@ -6064,13 +6048,6 @@ const COMMANDS = {
     help: 'Open Library',
     handler: (args, ctx) => _cmdToolPanel('library', args, ctx),
     usage: '/library'
-  },
-  gallery: {
-    alias: ['photos'],
-    category: 'Tools',
-    help: 'Open Gallery',
-    handler: (args, ctx) => _cmdToolPanel('gallery', args, ctx),
-    usage: '/gallery'
   },
   research: {
     alias: [],

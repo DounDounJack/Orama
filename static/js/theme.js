@@ -2000,10 +2000,14 @@ function _initAsciiFireflies() {
   const ramp = ' .,:;irsXA253hMHGS#9B&@';
   let columns = 0, rows = 0, flies = [], tick = 0, lastRender = 0;
   const resize = () => {
+    // Measure inside the <pre> so we use the font it actually renders with.
+    // (Measuring a bare `ui-monospace` span fails on Linux/Windows, where that
+    // family doesn't exist: it falls back to a wider proportional font, the
+    // column count comes out too low, and the art only fills ~60% of the width.)
     const metrics = document.createElement('span');
-    metrics.style.cssText = 'position:fixed;visibility:hidden;font:12px ui-monospace';
-    metrics.textContent = 'M'; document.body.append(metrics);
-    const charWidth = metrics.getBoundingClientRect().width || 7;
+    metrics.style.cssText = 'position:absolute;visibility:hidden;white-space:pre';
+    metrics.textContent = 'M'.repeat(100); output.append(metrics);
+    const charWidth = (metrics.getBoundingClientRect().width / 100) || 7;
     metrics.remove();
     columns = Math.max(40, Math.floor((window.innerWidth - 32) / charWidth));
     rows = Math.max(18, Math.floor((window.innerHeight - 28) / 12));

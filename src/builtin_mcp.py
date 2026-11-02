@@ -190,7 +190,10 @@ async def register_builtin_servers(mcp_manager):
         except BaseException as e:
             logger.warning(f"Built-in MCP server {name} error: {type(e).__name__}: {e}")
 
+    from src.doun_features import REMOVED_MCP_SERVERS
     for server_id, (script, name) in _BUILTIN_SERVERS.items():
+        if server_id in REMOVED_MCP_SERVERS:
+            continue  # Doun Industries: feature removed
         script_path = os.path.join(base_dir, script)
         if not os.path.exists(script_path):
             logger.warning(f"Built-in MCP server script not found: {script_path}")

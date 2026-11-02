@@ -21282,6 +21282,15 @@ async def stream_agent_loop(
 
     # Caller and credential denials remain absolute across contract routing.
     disabled_tools = set(disabled_tools or ())
+    # Doun Industries: Email/Calendar/Tasks are removed features (src/doun_features.py).
+    from src.doun_features import REMOVED_TOOLS as _DOUN_REMOVED_TOOLS
+    disabled_tools.update(_DOUN_REMOVED_TOOLS)
+    if tool_policy is not None:
+        tool_policy = replace(
+            tool_policy,
+            disabled_tools=frozenset(set(tool_policy.disabled_tools) | _DOUN_REMOVED_TOOLS),
+            hidden_tools=frozenset(set(tool_policy.hidden_tools) | _DOUN_REMOVED_TOOLS),
+        )
     if delegated_credential:
         disabled_tools.update(delegated_credential_blocked_tools())
         if tool_policy is not None:

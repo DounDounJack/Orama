@@ -1568,3 +1568,19 @@ button.cal-btn.cal-btn-danger:hover { background:var(--accent, var(--red)); colo
   0%   { box-shadow: 0 0 0 2px var(--accent, var(--red)); }
   100% { box-shadow: 0 0 0 2px transparent; }
 }
+
+/* ── Doun Industries: removed features ──────────────────────────────────────
+   Email, Calendar, Gallery and Tasks are taken out of this build. Their
+   buttons stay in the page (other scripts look them up by id) but are never
+   shown. The AI can't use their tools either: see src/doun_features.py. */
+#email-section, #rail-email,
+#tool-calendar-btn, #rail-calendar,
+#tool-gallery-btn, #rail-gallery,
+#tool-tasks-btn, #rail-tasks,
+.settings-nav-item[data-settings-tab="email"],
+.vis-row:has(input[data-ui-key="email-section"]),
+.vis-row:has(input[data-ui-key="tool-calendar"]),
+.vis-row:has(input[data-ui-key="tool-gallery"]),
+.vis-row:has(input[data-ui-key="tool-tasks"]) {
+  display: none !important;
+}
