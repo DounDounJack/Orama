@@ -11,8 +11,12 @@ no-build vanilla JS frontend (`static/`). Today it runs in Docker
 
 ## Who you're working with
 
-- A two-person team: the repo owner (Linux Mint 22, Docker installed) and a
-  friend who tests and is a collaborator on the GitHub repo.
+- A two-person team: the repo owner and a friend who tests and is a
+  collaborator on the GitHub repo.
+- The owner develops on a **Mac mini M4 Pro** (Apple Silicon, macOS 26, 24 GB
+  RAM, Homebrew, python.org Python 3.14; no Rust or Node yet, no Docker). They
+  also have a **Surface Laptop Go 2 running Linux Mint 22** (Docker installed,
+  the current Docker install of órama lives there). The friend is on Windows.
 - They don't write the code. You write it; they test it and make the calls.
 - Talk plainly and briefly. No jargon dumps. When they need to run something,
   give the exact command to copy and paste, and say what they should see.
@@ -73,8 +77,10 @@ All listed in `DOUN-SETUP.md` → "What changed from Odysseus". In short:
 
 ## Their current install
 
-The owner's working copy is `~/doun-industries` (from a zip plus two patch
-files, so its git history differs from this repo). Their chats, settings and
+The Docker install they use day to day is on the **Surface (Linux Mint)** at
+`~/doun-industries` (from a zip plus two patch files, so its git history
+differs from this repo). This repo is checked out on the Mac at `~/orama`.
+On the Surface, their chats, settings and
 API keys live in `~/doun-industries/data`, with config in
 `~/doun-industries/.env`. To switch to this repo's checkout: stop the old
 containers (`docker compose stop` in the old folder), then copy `data/` and
@@ -84,8 +90,10 @@ containers (`docker compose stop` in the old folder), then copy `data/` and
 
 Full plan: the "órama desktop app plan" doc on claude.ai. Summary:
 
-**Target:** one installer (.deb/AppImage on Linux, .exe/.msi on Windows), its
-own window, no Docker, no browser, no terminal needed. The Odysseus engine
+**Target:** one installer (.dmg on Mac, .deb/AppImage on Linux, .exe/.msi on
+Windows), its own window, no Docker, no browser, no terminal needed. **Build
+and test the Mac version first**, on the Mac mini you're running on; Linux and
+Windows follow in phase 2, built on GitHub Actions runners. The Odysseus engine
 still runs, hidden, as part of the app.
 
 **Architecture:** a Tauri 2 app (Rust) in a new `desktop/` folder. On launch
@@ -93,9 +101,11 @@ it starts the engine as a sidecar (the Python app frozen with PyInstaller;
 `Odysseus.spec`, `launcher.py` and `build-windows-portable.ps1` are a working
 starting point), on a random `127.0.0.1` port with a one-time token so only
 órama can talk to it. It waits until the engine answers, shows the UI in its
-own window, and stops the engine when the window closes. Data goes in
-`~/.local/share/orama` (Linux) or `%APPDATA%\orama` (Windows), not the app
-folder.
+own window, and stops the engine when the window closes. Data goes in the
+OS app-data folder (`~/Library/Application Support/orama` on Mac,
+`~/.local/share/orama` on Linux, `%APPDATA%\orama` on Windows), not the app
+folder. Odysseus already runs natively on Apple Silicon (`website/setup.md`,
+`build-macos-app.sh`).
 
 **Removing Docker:**
 - ChromaDB: `src/chroma_client.py` only uses `chromadb.HttpClient` (needs a
@@ -106,7 +116,7 @@ folder.
   work with keys). No SearXNG.
 - ntfy: drop it; use Tauri desktop notifications later.
 
-### Phase 1: Linux desktop app
+### Phase 1: Mac desktop app
 
 - [ ] Tauri project in `desktop/`
 - [ ] Engine runs natively without Docker (embedded Chroma, DuckDuckGo search, no ntfy)
@@ -114,14 +124,16 @@ folder.
 - [ ] Tauri starts/stops the engine (random port + token), opens the window when ready
 - [ ] Data in the user's home folder
 
-Done when: órama opens from the Mint menu in its own window with Docker
-turned off.
+Done when: órama opens from the Mac's Applications folder (or Dock) in its
+own window, with no Docker and no terminal. Unsigned is fine for their own use
+(Apple signing costs US$99 a year; only needed to share with other Macs).
 
-### Phase 2: installers and Windows
+### Phase 2: Linux, Windows and installers
 
-- [ ] .deb and AppImage
-- [ ] GitHub Actions workflow that builds the Windows installer on a Windows
-  runner (PyInstaller can't cross-compile)
+- [ ] GitHub Actions workflow that builds the Linux .deb/AppImage on an
+  Ubuntu runner and the Windows installer on a Windows runner (PyInstaller
+  can't cross-compile). Upstream's `.github/` isn't in this repo; write a new one
+- [ ] Owner tests the Linux build on the Surface (Linux Mint 22)
 - [ ] First-run screen: create login, paste an API key
 - [ ] Auto-updates from GitHub releases
 - [ ] Friend tests on Windows
@@ -141,5 +153,7 @@ engine's API. Design calls are theirs: show them before building.
 ## Handy facts
 
 - Google retired `gemini-2.5-flash` (returns 404); use `gemini-3.5-flash`.
-- Their machine is Linux Mint 22 (Ubuntu 24.04 base), so .deb builds made on
-  Ubuntu 24.04 run on it.
+- The Surface runs Linux Mint 22 (Ubuntu 24.04 base), so .deb builds made on
+  an Ubuntu 24.04 runner run on it.
+- The Surface Laptop Go 2 is a small laptop: keep heavy builds on the Mac or
+  GitHub Actions, not on it.
