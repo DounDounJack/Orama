@@ -76,6 +76,7 @@ class DesktopGate:
     @staticmethod
     async def _plain(send, status: int, body: bytes, extra=()):
         headers = [(b"content-type", b"text/plain; charset=utf-8"),
+                   (b"content-length", str(len(body)).encode("latin-1")),
                    (b"cache-control", b"no-store")] + list(extra)
         await send({"type": "http.response.start", "status": status, "headers": headers})
         await send({"type": "http.response.body", "body": body})
@@ -99,11 +100,12 @@ class DesktopGate:
                     and secrets.compare_digest(token, self._launch_token)):
                 self._launch_used = True
                 cookie = (f"{COOKIE_NAME}={self._session}; Path=/; HttpOnly; "
-                          f"SameSite=Strict")
+                          f"SameSite=Lax")
                 await send({"type": "http.response.start", "status": 302, "headers": [
                     (b"location", b"/"),
                     (b"set-cookie", cookie.encode("latin-1")),
                     (b"cache-control", b"no-store"),
+                    (b"content-length", b"0"),
                 ]})
                 await send({"type": "http.response.body", "body": b""})
                 return

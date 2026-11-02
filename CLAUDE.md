@@ -118,11 +118,14 @@ folder. Odysseus already runs natively on Apple Silicon (`website/setup.md`,
 
 ### Phase 1: Mac desktop app
 
-- [ ] Tauri project in `desktop/`
-- [ ] Engine runs natively without Docker (embedded Chroma, DuckDuckGo search, no ntfy)
-- [ ] Engine packaged with PyInstaller as a Tauri sidecar
-- [ ] Tauri starts/stops the engine (random port + token), opens the window when ready
-- [ ] Data in the user's home folder
+- [x] Tauri project in `desktop/`
+- [x] Engine runs natively without Docker (embedded Chroma, DuckDuckGo search, no ntfy)
+- [x] Engine packaged with PyInstaller as a Tauri sidecar
+- [x] Tauri starts/stops the engine (random port + token), opens the window when ready
+- [x] Data in the user's home folder
+
+Built on branch `desktop-app`; see `desktop/README.md`. Waiting on the
+owner's test from the Applications folder.
 
 Done when: órama opens from the Mac's Applications folder (or Dock) in its
 own window, with no Docker and no terminal. Unsigned is fine for their own use

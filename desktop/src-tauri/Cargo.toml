@@ -1,0 +1,23 @@
+[package]
+name = "orama"
+version = "0.1.0"
+description = "órama desktop app"
+authors = ["Doun Industries"]
+license = "AGPL-3.0-or-later"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+getrandom = "0.2"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

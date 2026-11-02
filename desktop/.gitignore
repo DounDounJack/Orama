@@ -4,3 +4,6 @@ engine/dist/
 src-tauri/target/
 src-tauri/gen/
 src-tauri/resources/engine/
+
+# Tauri app icons are needed to build the desktop app
+!/src-tauri/icons/*.png
