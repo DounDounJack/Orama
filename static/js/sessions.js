@@ -1200,7 +1200,7 @@ function createSessionItem(s) {
     _skipAutoSelect = true;
     // Clean up persistent chat mapping
     try {
-      const pm = await import('./presets.js?v=20260908personaname1');
+      const pm = await import('./presets.js?v=20261102voice1');
       if (pm.removePersistentChat) pm.removePersistentChat(s.id);
     } catch (e) {}
     // On mobile, close sidebar if we deleted the active session so user sees welcome screen
@@ -2192,7 +2192,7 @@ export async function selectSession(id, { keepSidebar = false, showLoading = tru
     _forceExitIncognitoUi();
     // Restore character preset for persistent chats
     try {
-      const presetsModule = window.presetsModule || (await import('./presets.js?v=20260908personaname1')).default;
+      const presetsModule = window.presetsModule || (await import('./presets.js?v=20261102voice1')).default;
       if (presetsModule && presetsModule.onSessionSwitch) presetsModule.onSessionSwitch(id);
     } catch (e) {}
     const meta = sessions.find(s => s.id === id);
@@ -2814,7 +2814,7 @@ export async function deleteCurrentSessionFromTopMenu() {
   _removeSessionFromLocalState(sid);
   _skipAutoSelect = true;
   try {
-    const pm = await import('./presets.js?v=20260908personaname1');
+    const pm = await import('./presets.js?v=20261102voice1');
     if (pm.removePersistentChat) pm.removePersistentChat(sid);
   } catch (e) {}
   try {

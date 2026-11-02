@@ -4,6 +4,8 @@
  * Preset management
  */
 
+import voiceProfiles from './voiceProfiles.js';
+
 let API_BASE = '';
 let selectedPreset = null;
 let presets = {};
@@ -86,6 +88,7 @@ export function init(apiBase) {
   initExpandButton();
   initPersistentChat();
   loadUserTemplates();
+  voiceProfiles.init(apiBase);
 }
 
 function initCharTabs() {
@@ -221,6 +224,7 @@ function initNameDropdown() {
       if (tokensInput) { tokensInput.value = 8448; if (tokensValue) tokensValue.textContent = 'No limit'; tokensInput.dispatchEvent(new Event('input')); }
       if (thinkingInput) thinkingInput.value = '';
       if (delBtn) delBtn.style.display = 'none';
+      voiceProfiles.setProfile(null);
       return;
     }
     // Load the selected template
@@ -296,6 +300,7 @@ function _tryLoadTemplate(name) {
         persona_memory: builtin.persona_memory || '',
         persona_memory_schema: builtin.persona_memory_schema || 'general',
       };
+      voiceProfiles.setProfile(null);
       return;
     }
     return;
@@ -323,6 +328,7 @@ function _tryLoadTemplate(name) {
     persona_memory: tmpl.persona_memory || '',
     persona_memory_schema: tmpl.persona_memory_schema || 'general',
   };
+  voiceProfiles.setProfile(tmpl.voice || null);
   const delBtn = document.getElementById('char-delete-template-btn');
   if (delBtn) delBtn.style.display = '';
 }
@@ -487,6 +493,7 @@ function initSaveAsTemplate() {
       max_tokens: _rawTk > 8192 ? 0 : _rawTk,
       persona_memory: presets.custom?.persona_memory || '',
       persona_memory_schema: presets.custom?.persona_memory_schema || 'general',
+      voice: voiceProfiles.getProfile(),
     };
 
     try {
@@ -601,6 +608,7 @@ export function openCustomPresetModal(openTab = '') {
   const showNameInput = document.getElementById('custom-show-persona-name');
 
   if (nameInput) nameInput.value = savedConfig.character_name || '';
+  voiceProfiles.setProfile(savedConfig.voice || null);
   // Sync select dropdown to current character
   const charSelect = document.getElementById('char-template-select');
   if (charSelect) {
@@ -834,6 +842,8 @@ export async function saveCustomPreset(showToast, showError) {
     show_persona_name: showNameInput ? showNameInput.checked : true,
     persona_memory: presets.custom?.character_name === name ? (presets.custom?.persona_memory || '') : '',
     persona_memory_schema: presets.custom?.character_name === name ? (presets.custom?.persona_memory_schema || 'general') : 'general',
+    // órama voice assistant: speaking style + voice (null for plain personas)
+    voice: _isInjectStart ? null : voiceProfiles.getProfile(),
   };
 
   try {
@@ -890,6 +900,7 @@ export async function saveCustomPreset(showToast, showError) {
           max_tokens: config.max_tokens,
           persona_memory: config.persona_memory || '',
           persona_memory_schema: config.persona_memory_schema || 'general',
+          voice: config.voice || null,
         }
         const ENDPOINT = `${API_BASE}/api/presets/templates`;
 
@@ -1015,6 +1026,21 @@ export function getThinkingMode() {
 /**
  * Fully deactivate the character — clear preset, hide indicator, update overflow btn.
  */
+/**
+ * Voice + speed of the active persona (órama voice assistant), or null when
+ * no persona with a voice is active. Read by tts-ai.js and talkMode.js.
+ */
+export function getActiveVoice() {
+  const c = presets.custom;
+  if (selectedPreset !== 'custom' || !c || c.enabled === false || !c.voice) return null;
+  return {
+    name: c.character_name || '',
+    voice: c.voice.voice || '',
+    speed: Number(c.voice.speed) || 1,
+  };
+}
+try { window.oramaGetActiveVoice = getActiveVoice; } catch (_) {}
+
 export function deactivateCharacter() {
   selectedPreset = null;
   if (presets.custom) presets.custom.enabled = false;
@@ -1165,6 +1191,7 @@ export function onSessionSwitch(sessionId) {
         max_tokens: tmpl.max_tokens || 0,
         persona_memory: tmpl.persona_memory || '',
         persona_memory_schema: tmpl.persona_memory_schema || 'general',
+        voice: tmpl.voice || null,
         enabled: true,
       };
       selectedPreset = 'custom';
@@ -1218,7 +1245,8 @@ const presetsModule = {
   removePersistentChat,
   deactivateCharacter,
   getInject,
-  getThinkingMode
+  getThinkingMode,
+  getActiveVoice
 };
 
 export default presetsModule;

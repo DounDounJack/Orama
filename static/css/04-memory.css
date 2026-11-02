@@ -1674,3 +1674,93 @@ textarea.memory-add-input {
   gap: 5px;
   flex-shrink: 0;
 }
+
+/* ── órama voice assistant: Voice tab in the persona window ── */
+.voice-panel { display: flex; flex-direction: column; }
+.voice-panel .voice-intro { margin: 0 0 10px; font-size: 12px; color: var(--color-muted); line-height: 1.45; }
+.voice-panel input[type="text"], .voice-panel select { width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+.voice-slider { margin-bottom: 6px; }
+.voice-slider-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--color-muted); }
+.voice-slider-row span { flex: 0 0 52px; }
+.voice-slider-row span:last-child { text-align: right; }
+.voice-slider-row input[type="range"] { flex: 1; accent-color: var(--accent, var(--red)); margin: 0; }
+#voice-speed-value { color: var(--fg); font-size: 11px; margin-left: 4px; }
+.voice-chips {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  border: 1px solid var(--border); border-radius: 6px; padding: 4px; margin-bottom: 8px;
+  background: var(--bg); cursor: text; min-height: 30px; box-sizing: border-box;
+}
+.voice-panel .voice-chips input[type="text"] {
+  flex: 1; min-width: 120px; border: none; background: none; margin: 0; padding: 3px 4px; outline: none;
+}
+.voice-chip {
+  display: inline-flex; align-items: center; gap: 2px; font-size: 11px;
+  padding: 2px 4px 2px 8px; border-radius: 10px;
+  background: color-mix(in srgb, var(--accent, var(--red)) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, var(--red)) 40%, transparent);
+}
+.voice-chip-x {
+  background: none; border: none; color: var(--color-muted); cursor: pointer;
+  font-size: 13px; line-height: 1; padding: 0 3px;
+}
+.voice-chip-x:hover { color: var(--fg); }
+.voice-voice-row { display: flex; gap: 6px; align-items: flex-start; }
+.voice-voice-row select { flex: 1; }
+.voice-note { font-size: 11px; color: var(--accent, var(--red)); margin: 2px 0 8px; }
+.voice-prompt-details { margin: 6px 0 8px; font-size: 11px; }
+.voice-prompt-details summary { cursor: pointer; color: var(--color-muted); }
+.voice-prompt-details pre {
+  white-space: pre-wrap; font-size: 11px; line-height: 1.45; margin: 6px 0 0;
+  padding: 8px; border: 1px solid var(--border); border-radius: 6px; max-height: 180px; overflow-y: auto;
+}
+.voice-off-btn { align-self: flex-start; }
+.voice-panel.voice-off .voice-prompt-details { opacity: 0.6; }
+
+/* ── órama voice assistant: talk mode ── */
+.talk-mode-open { color: var(--color-muted); }
+.talk-mode-open:hover { color: var(--accent, var(--red)); }
+.talk-mode {
+  position: fixed; inset: 0; z-index: 10050;
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px 16px calc(24px + var(--safe-bottom, 0px)); box-sizing: border-box;
+  color: var(--fg); font-family: var(--font-family);
+}
+.talk-mode.hidden { display: none; }
+.talk-close {
+  position: absolute; top: 16px; right: 16px; background: none; border: 1px solid var(--border);
+  color: var(--color-muted); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 13px;
+}
+.talk-close:hover { color: var(--fg); border-color: var(--fg); }
+.talk-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; max-width: 640px; width: 100%; text-align: center; }
+.talk-orb {
+  width: 132px; height: 132px; border-radius: 50%; border: 2px solid var(--accent, var(--red));
+  background: color-mix(in srgb, var(--accent, var(--red)) 10%, transparent);
+  display: grid; place-items: center; cursor: pointer; touch-action: none;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.talk-orb-core {
+  width: 46px; height: 46px; border-radius: 50%; background: var(--accent, var(--red));
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.talk-mode[data-state="listening"] .talk-orb { transform: scale(1.08); background: color-mix(in srgb, var(--accent, var(--red)) 22%, transparent); }
+.talk-mode[data-state="listening"] .talk-orb-core { animation: talk-pulse 0.9s ease-in-out infinite; }
+.talk-mode[data-state="transcribing"] .talk-orb-core,
+.talk-mode[data-state="thinking"] .talk-orb-core { animation: talk-breathe 1.6s ease-in-out infinite; }
+.talk-mode[data-state="speaking"] .talk-orb-core { animation: talk-speak 0.5s ease-in-out infinite alternate; }
+@keyframes talk-pulse { 50% { transform: scale(1.35); } }
+@keyframes talk-breathe { 50% { opacity: 0.35; } }
+@keyframes talk-speak { from { transform: scale(0.85); } to { transform: scale(1.2); } }
+.talk-status { font-size: 15px; min-height: 1.4em; max-width: 520px; line-height: 1.45; }
+.talk-heard { font-size: 13px; color: var(--color-muted); min-height: 1.4em; max-width: 560px; line-height: 1.5; overflow-wrap: anywhere; }
+.talk-persona { font-size: 11px; color: var(--color-muted); letter-spacing: 0.02em; min-height: 1.2em; }
+.talk-controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.talk-mode-btn {
+  background: none; border: 1px solid var(--border); color: var(--color-muted);
+  border-radius: 999px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.talk-mode-btn.active { border-color: var(--accent, var(--red)); color: var(--fg); background: color-mix(in srgb, var(--accent, var(--red)) 14%, transparent); }
+@media (prefers-reduced-motion: reduce) {
+  .talk-orb, .talk-orb-core { animation: none !important; transition: none; }
+}

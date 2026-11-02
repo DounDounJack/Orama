@@ -26,8 +26,52 @@ class AITTSManager {
         this._streamResetFn = null;
         this._streamDebounceTimer = null;
 
+        // One-off voice for a sample (órama voice assistant), else the
+        // active persona's voice, else Settings.
+        this._voiceOnce = null;
+
         // Check if TTS service is available
         this.checkAvailability();
+    }
+
+    /** {voice, speed} to speak with right now, or null for Settings. */
+    _activeVoice() {
+        if (this._voiceOnce) return this._voiceOnce;
+        try {
+            const v = window.oramaGetActiveVoice ? window.oramaGetActiveVoice() : null;
+            if (v && (v.voice || (v.speed && v.speed !== 1))) return v;
+        } catch (_) {}
+        return null;
+    }
+
+    _effectiveSpeed() {
+        const v = this._activeVoice();
+        return (v && v.speed) ? v.speed : this.playbackSpeed;
+    }
+
+    /** Speak `text` once with a given voice/speed (Voice tab sample). */
+    async speakWithVoice(text, voice) {
+        this.stop();
+        this._voiceOnce = { voice: (voice && voice.voice) || '', speed: (voice && voice.speed) || 1 };
+        try {
+            const plainText = this.extractPlainText(text);
+            if (!plainText) return;
+            if (this.useBrowserTTS) {
+                await this._playBrowser(plainText);
+                return;
+            }
+            const url = await this.synthesize(text);
+            await new Promise((resolve, reject) => {
+                const audio = new Audio(url);
+                if (this._provider === 'local') audio.playbackRate = this._effectiveSpeed();
+                this.currentAudio = audio;
+                audio.onended = () => { this.isPlaying = false; resolve(); };
+                audio.onerror = () => { this.isPlaying = false; reject(new Error('Audio playback error')); };
+                audio.play().then(() => { this.isPlaying = true; }).catch(reject);
+            });
+        } finally {
+            this._voiceOnce = null;
+        }
     }
 
     async checkAvailability() {
@@ -122,7 +166,8 @@ class AITTSManager {
             return '__browser_tts__';
         }
 
-        const cacheKey = this.getCacheKey(plainText);
+        const _v = this._activeVoice();
+        const cacheKey = this.getCacheKey(plainText) + (_v ? `|${_v.voice}|${_v.speed}` : '');
 
         // Check cache first
         if (this.cache.has(cacheKey)) {
@@ -139,7 +184,9 @@ class AITTSManager {
                 },
                 body: JSON.stringify({
                     text: plainText,
-                    format: 'audio'
+                    format: 'audio',
+                    ...(_v && _v.voice ? { voice: _v.voice } : {}),
+                    ...(_v && _v.speed ? { speed: Math.max(0.5, Math.min(2, _v.speed)) } : {})
                 })
             });
 
@@ -165,9 +212,11 @@ class AITTSManager {
     }
 
     _findBrowserVoice() {
-        if (!this.browserVoice) return null;
+        const _v = this._activeVoice();
+        const wanted = (_v && _v.voice) || this.browserVoice;
+        if (!wanted) return null;
         const voices = window.speechSynthesis.getVoices();
-        const target = this.browserVoice.toLowerCase();
+        const target = wanted.toLowerCase();
         // Try exact match first, then partial
         return voices.find(v => v.name.toLowerCase() === target) ||
                voices.find(v => v.name.toLowerCase().includes(target)) ||
@@ -205,7 +254,7 @@ class AITTSManager {
             const utterance = new SpeechSynthesisUtterance(plainText);
             const voice = this._findBrowserVoice();
             if (voice) utterance.voice = voice;
-            utterance.rate = this.playbackSpeed;
+            utterance.rate = this._effectiveSpeed();
 
             utterance.onend = () => {
                 this.isPlaying = false;
@@ -313,8 +362,8 @@ class AITTSManager {
 
                 await new Promise((resolve, reject) => {
                     const audio = new Audio(audioUrl);
-                    if (this._provider === 'local' && this.playbackSpeed !== 1) {
-                        audio.playbackRate = this.playbackSpeed;
+                    if (this._provider === 'local' && this._effectiveSpeed() !== 1) {
+                        audio.playbackRate = this._effectiveSpeed();
                     }
                     this.currentAudio = audio;
                     audio.onended = () => {

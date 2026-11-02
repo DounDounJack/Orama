@@ -6,7 +6,7 @@ import { getModelCost, renderAskUserCard, safeDisplayImageSrc } from '../chatRen
 import markdownModule from '../markdown.js';
 import spinnerModule from '../spinner.js';
 import uiModule from '../ui.js?v=20260916largetoolscroll1';
-import presetsModule from '../presets.js?v=20260908personaname1';
+import presetsModule from '../presets.js?v=20261102voice1';
 
 var escapeHtml = uiModule.esc;
 

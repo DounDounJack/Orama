@@ -1279,6 +1279,10 @@
             <button type="button" class="mode-toggle-btn active" id="mode-agent-btn" aria-pressed="true">Agent</button>
             <button type="button" class="mode-toggle-btn" id="mode-chat-btn" aria-pressed="false">Chat</button>
           </div>
+          <!-- órama talk mode (voice conversation) -->
+          <button type="button" class="input-icon-btn talk-mode-open" id="talk-mode-btn" title="Talk mode" aria-label="Talk mode">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="10" x2="4" y2="14"/><line x1="8" y1="7" x2="8" y2="17"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="16" y1="7" x2="16" y2="17"/><line x1="20" y1="10" x2="20" y2="14"/></svg>
+          </button>
           <button type="submit" form="chat-form" class="send-btn newchat-mode" data-mode="newchat" aria-label="New chat">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="send-btn-label">+ New</span>
           </button>
@@ -1314,6 +1318,7 @@
               <button class="preset-tab active" data-chartab="inject"><svg class="preset-tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 2 4 4"/><path d="m17 7 3-3"/><path d="M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5"/><path d="m9 11 4 4"/><path d="m5 19-3 3"/><path d="m14 4 6 6"/></svg><span>Inject</span></button>
               <button class="preset-tab" data-chartab="character"><svg class="preset-tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Persona</span></button>
               <button class="preset-tab" data-chartab="group"><svg class="preset-tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Group</span></button>
+              <button class="preset-tab" data-chartab="voice"><svg class="preset-tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg><span>Voice</span></button>
             </div>
             <!-- Inject tab (also holds model tuning: temperature + max tokens) -->
             <div class="preset-chartab" data-chartab-panel="inject">
@@ -1357,6 +1362,52 @@
                   Expand
                 </button>
               </div>
+            </div>
+            <!-- Voice tab (órama voice assistant): speaking style + voice for this persona -->
+            <div class="preset-chartab voice-panel" data-chartab-panel="voice" style="display:none">
+              <p class="voice-intro">Give this persona a way of talking and a voice. These settings write its system prompt for you.</p>
+              <label for="voice-starter">Start from</label>
+              <select id="voice-starter" class="char-template-select"><option value="">Pick a starter style…</option></select>
+              <label for="voice-name">Name</label>
+              <input type="text" id="voice-name" maxlength="50" placeholder="Give it a name..." autocomplete="off">
+              <label for="voice-address">Calls you</label>
+              <input type="text" id="voice-address" maxlength="40" placeholder="e.g. sir, boss, or your name (or leave empty)" autocomplete="off">
+              <div class="voice-slider">
+                <label for="voice-formality">Tone</label>
+                <div class="voice-slider-row"><span>Formal</span><input type="range" id="voice-formality" min="0" max="100" step="5" value="50"><span>Casual</span></div>
+              </div>
+              <div class="voice-slider">
+                <label for="voice-length">Length</label>
+                <div class="voice-slider-row"><span>Short</span><input type="range" id="voice-length" min="0" max="100" step="5" value="40"><span>Chatty</span></div>
+              </div>
+              <div class="voice-slider">
+                <label for="voice-humour">Humour</label>
+                <div class="voice-slider-row"><span>None</span><input type="range" id="voice-humour" min="0" max="100" step="5" value="30"><span>Lots</span></div>
+              </div>
+              <label for="voice-phrases-input">Likes to say</label>
+              <div class="voice-chips" id="voice-phrases"><input type="text" id="voice-phrases-input" maxlength="80" placeholder="Type a phrase, press Enter"></div>
+              <label for="voice-avoid-input">Never says</label>
+              <div class="voice-chips" id="voice-avoid"><input type="text" id="voice-avoid-input" maxlength="40" placeholder="Type a word, press Enter"></div>
+              <label for="voice-voice">Voice</label>
+              <div class="voice-voice-row">
+                <select id="voice-voice"><option value="">Default voice (from Settings)</option></select>
+                <button type="button" id="voice-sample" class="char-action-btn" title="Hear a sample">&#9654; Sample</button>
+              </div>
+              <div class="voice-slider">
+                <label for="voice-speed">Speed <span id="voice-speed-value">1×</span></label>
+                <div class="voice-slider-row"><span>Slower</span><input type="range" id="voice-speed" min="0.5" max="2" step="0.05" value="1"><span>Faster</span></div>
+              </div>
+              <p id="voice-tts-note" class="voice-note" style="display:none"></p>
+              <label class="vis-row" for="voice-auto-prompt" title="Turn off to write the system prompt yourself on the Persona tab">
+                <span class="vis-label">Write the system prompt from these settings</span>
+                <input type="checkbox" id="voice-auto-prompt" checked>
+                <span class="vis-switch"></span>
+              </label>
+              <details class="voice-prompt-details">
+                <summary>See the instructions this writes</summary>
+                <pre id="voice-prompt-preview"></pre>
+              </details>
+              <button type="button" id="voice-off-btn" class="char-action-btn voice-off-btn" style="display:none">Remove voice from this persona</button>
             </div>
             <!-- Group tab -->
             <div class="preset-chartab" data-chartab-panel="group" style="display:none">
@@ -2718,9 +2769,10 @@
 <script type="module" src="/static/js/tourAutoplay.js"></script>
 <script type="module" src="/static/js/fileHandler.js?v=20260909mobileattachmentedit1"></script>
 <script type="module" src="/static/js/voiceRecorder.js"></script>
+<script type="module" src="/static/js/talkMode.js"></script>
 <script type="module" src="/static/js/models.js"></script>  <!-- This must come BEFORE app.js -->
 <script type="module" src="/static/js/rag.js"></script>
-<script type="module" src="/static/js/presets.js?v=20260908personaname1"></script>
+<script type="module" src="/static/js/presets.js?v=20261102voice1"></script>
 <script type="module" src="/static/js/search.js"></script>
 <script type="module" src="/static/js/spinner.js"></script>
 <script type="module" src="/static/js/tts-ai.js"></script>
