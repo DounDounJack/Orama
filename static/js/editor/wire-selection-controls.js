@@ -1,0 +1,344 @@
+/**
+ * Lasso + Magic Wand panel controls — sliders, mode toggles, and the
+ * panel action buttons (Invert / Clear / Delete / Copy / To Mask /
+ * Bg Remove). The actual selection algorithms live in their tool
+ * modules (editor/tools/lasso.js, editor/tools/wand.js); this file
+ * just wires the side-panel UI to them.
+ *
+ *   Lasso section:
+ *     #ge-lasso-feather       slider, updates label + preview, recomposites
+ *     #ge-lasso-grow          slider, updates label + recomposites
+ *     #ge-lasso-invert        → invertSelection
+ *     #ge-lasso-delete        → lassoDeleteSelection
+ *     #ge-lasso-copy          → lassoCopyToLayer
+ *     #ge-lasso-mask          → lassoToMask
+ *
+ *   Wand section:
+ *     #ge-wand-feather        slider, updates label + recomposites
+ *     #ge-wand-grow           slider, updates label + recomposites
+ *     #ge-wand-tolerance      slider, updates future wand-click tolerance
+ *     #ge-wand-live           opt-in rAF-coalesced live retune while dragging
+ *     .ge-wand-mode-btn       segmented toggle (New / Add / Subtract)
+ *     #ge-wand-vis            toggle the translucent red overlay
+ *     #ge-wand-clear / -invert / -delete / -copy / -mask / -rembg
+ *
+ * @param {{
+ *   composite:               () => void,
+ *   invertSelection:         () => boolean,
+ *   lassoDeleteSelection:    () => void,
+ *   lassoCopyToLayer:        () => void,
+ *   lassoToMask:             () => void,
+ *   runMagicWand:            (x: number, y: number, mode: string, opts?: object) => void,
+ *   wandClear:               () => void,
+ *   wandDeleteSelection:     () => void,
+ *   wandCopyToNewLayer:      () => void,
+ *   wandToMask:              () => void,
+ *   buildSelectionHintMask:  () => string | null,
+ *   applyImageTool:          (endpoint, payload, name, btn, opts?) => Promise<void>,
+ *   uiModule:                object,
+ * }} deps
+ */
+import { state } from './state.js';
+
+const EYE_OPEN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><line x1="8" y1="16" x2="16" y2="8"/><line x1="8" y1="8" x2="16" y2="16"/></svg>';
+
+export function wireSelectionControls({
+  composite,
+  invertSelection,
+  lassoDeleteSelection, lassoCopyToLayer, lassoToMask,
+  runMagicWand,
+  wandClear, wandDeleteSelection, wandCopyToNewLayer, wandToMask,
+  buildSelectionHintMask, applyImageTool,
+  uiModule,
+  toggleQuickMask,
+}) {
+  document.querySelectorAll('.ge-quick-mask-toggle').forEach(button => {
+    button.addEventListener('click', toggleQuickMask);
+  });
+  // ── Rectangle / ellipse marquee ──
+  document.querySelectorAll('.ge-marquee-shape-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.marqueeShape = btn.dataset.marqueeShape === 'ellipse' ? 'ellipse' : 'rectangle';
+      document.querySelectorAll('.ge-marquee-shape-btn').forEach(candidate => {
+        const active = candidate.dataset.marqueeShape === state.marqueeShape;
+        candidate.classList.toggle('active', active);
+        candidate.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    });
+  });
+  const constraint = document.getElementById('ge-marquee-constraint');
+  const dimensions = document.querySelector('.ge-marquee-dimensions');
+  const widthInput = document.getElementById('ge-marquee-width');
+  const heightInput = document.getElementById('ge-marquee-height');
+  const syncMarqueeConstraint = () => {
+    state.marqueeConstraint = ['ratio', 'size'].includes(constraint?.value) ? constraint.value : 'free';
+    if (dimensions) dimensions.hidden = state.marqueeConstraint === 'free';
+    if (widthInput) widthInput.step = state.marqueeConstraint === 'size' ? '1' : '0.01';
+    if (heightInput) heightInput.step = state.marqueeConstraint === 'size' ? '1' : '0.01';
+    if (widthInput) widthInput.value = String(state.marqueeConstraint === 'size' ? state.marqueeFixedWidth : state.marqueeRatioWidth);
+    if (heightInput) heightInput.value = String(state.marqueeConstraint === 'size' ? state.marqueeFixedHeight : state.marqueeRatioHeight);
+  };
+  const commitMarqueeDimensions = () => {
+    const w = Math.max(1, Number(widthInput?.value) || 1);
+    const h = Math.max(1, Number(heightInput?.value) || 1);
+    if (state.marqueeConstraint === 'size') {
+      state.marqueeFixedWidth = Math.round(w);
+      state.marqueeFixedHeight = Math.round(h);
+    } else {
+      state.marqueeRatioWidth = w;
+      state.marqueeRatioHeight = h;
+    }
+    if (widthInput) widthInput.value = String(state.marqueeConstraint === 'size' ? state.marqueeFixedWidth : state.marqueeRatioWidth);
+    if (heightInput) heightInput.value = String(state.marqueeConstraint === 'size' ? state.marqueeFixedHeight : state.marqueeRatioHeight);
+  };
+  constraint?.addEventListener('change', syncMarqueeConstraint);
+  widthInput?.addEventListener('change', commitMarqueeDimensions);
+  heightInput?.addEventListener('change', commitMarqueeDimensions);
+  document.getElementById('ge-marquee-swap')?.addEventListener('click', () => {
+    const oldWidth = widthInput?.value;
+    if (widthInput && heightInput) {
+      widthInput.value = heightInput.value;
+      heightInput.value = oldWidth;
+      commitMarqueeDimensions();
+    }
+  });
+  if (constraint) constraint.value = state.marqueeConstraint || 'free';
+  syncMarqueeConstraint();
+  document.getElementById('ge-marquee-clear')?.addEventListener('click', wandClear);
+  document.getElementById('ge-marquee-invert')?.addEventListener('click', invertSelection);
+  document.getElementById('ge-marquee-delete')?.addEventListener('click', wandDeleteSelection);
+  document.getElementById('ge-marquee-copy')?.addEventListener('click', wandCopyToNewLayer);
+  document.getElementById('ge-marquee-mask')?.addEventListener('click', wandToMask);
+
+  // ── Lasso section ──
+  const lassoFPrev = document.getElementById('ge-lasso-feather-preview');
+  function syncLassoFeather(v) {
+    if (!lassoFPrev) return;
+    const inner = Math.max(0, 50 - v * 1.0);
+    lassoFPrev.style.background = `radial-gradient(circle, var(--fg) 0%, var(--fg) ${inner}%, transparent 75%)`;
+  }
+  syncLassoFeather(0);
+  document.getElementById('ge-lasso-feather')?.addEventListener('input', (e) => {
+    document.getElementById('ge-lasso-feather-label').textContent = e.target.value + 'px';
+    syncLassoFeather(parseInt(e.target.value, 10));
+    composite();
+  });
+  document.getElementById('ge-lasso-grow')?.addEventListener('input', (e) => {
+    document.getElementById('ge-lasso-grow-label').textContent = e.target.value + 'px';
+    composite();
+  });
+  const syncLassoMagneticRows = () => {
+    const on = !!state.lassoMagnetic;
+    const widthRow = document.getElementById('ge-lasso-mag-width-row');
+    const contrastRow = document.getElementById('ge-lasso-mag-contrast-row');
+    if (widthRow) widthRow.style.display = on ? '' : 'none';
+    if (contrastRow) contrastRow.style.display = on ? '' : 'none';
+    const toggle = document.getElementById('ge-lasso-magnetic');
+    if (toggle) {
+      toggle.classList.toggle('active', on);
+      toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  };
+  document.getElementById('ge-lasso-magnetic')?.addEventListener('click', () => {
+    state.lassoMagnetic = !state.lassoMagnetic;
+    syncLassoMagneticRows();
+  });
+  document.getElementById('ge-lasso-mag-width')?.addEventListener('input', (e) => {
+    state.lassoMagneticWidth = parseInt(e.target.value, 10) || 12;
+    const lbl = document.getElementById('ge-lasso-mag-width-label');
+    if (lbl) lbl.textContent = state.lassoMagneticWidth + 'px';
+  });
+  document.getElementById('ge-lasso-mag-contrast')?.addEventListener('input', (e) => {
+    state.lassoMagneticContrast = parseInt(e.target.value, 10);
+    const lbl = document.getElementById('ge-lasso-mag-contrast-label');
+    if (lbl) lbl.textContent = state.lassoMagneticContrast + '%';
+  });
+  syncLassoMagneticRows();
+  document.getElementById('ge-lasso-delete')?.addEventListener('click', () => {
+    if (state.lassoPoints.length >= 3 && !state.lassoActive) lassoDeleteSelection();
+    else if (state.wandMask) wandDeleteSelection();
+  });
+  document.getElementById('ge-lasso-copy')?.addEventListener('click', () => {
+    if ((state.lassoPoints.length >= 3 && !state.lassoActive) || state.wandMask) lassoCopyToLayer();
+  });
+  document.getElementById('ge-lasso-mask')?.addEventListener('click', () => {
+    if (state.lassoPoints.length >= 3 && !state.lassoActive) lassoToMask();
+    else if (state.wandMask) wandToMask();
+  });
+  document.getElementById('ge-lasso-invert')?.addEventListener('click', invertSelection);
+
+  // Lasso "More" dropdown holding the secondary controls (feather, edge
+  // stroke, magnetic + its width/contrast) so the lasso strip stays short.
+  const lassoMore = document.getElementById('ge-lasso-more');
+  const lassoMoreMenu = document.getElementById('ge-lasso-more-menu');
+  const closeLassoMore = () => {
+    if (!lassoMoreMenu || lassoMoreMenu.hidden) return;
+    lassoMoreMenu.hidden = true;
+    lassoMore?.setAttribute('aria-expanded', 'false');
+    lassoMore?.classList.remove('active');
+  };
+  lassoMore?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!lassoMoreMenu) return;
+    const open = lassoMoreMenu.hidden;
+    lassoMoreMenu.hidden = !open;
+    lassoMore.setAttribute('aria-expanded', open ? 'true' : 'false');
+    lassoMore.classList.toggle('active', open);
+  });
+  document.addEventListener('click', (e) => {
+    if (!lassoMoreMenu || lassoMoreMenu.hidden) return;
+    if (lassoMoreMenu.contains(e.target) || e.target === lassoMore) return;
+    closeLassoMore();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLassoMore();
+  });
+
+  // ── Wand section ──
+  document.getElementById('ge-wand-feather')?.addEventListener('input', (e) => {
+    const v = parseInt(e.target.value, 10) || 0;
+    document.getElementById('ge-wand-feather-label').textContent = v + 'px';
+    const prev = document.getElementById('ge-wand-feather-preview');
+    if (prev) prev.style.setProperty('--feather-blur', Math.min(v / 14, 8) + 'px');
+    composite();
+  });
+  document.getElementById('ge-wand-grow')?.addEventListener('input', (e) => {
+    document.getElementById('ge-wand-grow-label').textContent = e.target.value + 'px';
+    composite();
+  });
+
+  // Tolerance slider fires `input` rapidly — coalesce to one wand run
+  // per frame with rAF. Label updates synchronously so the number
+  // tracks the cursor even when the flood-fill runs at ~60fps.
+  let wandRetuneRaf = null;
+  const retuneWand = () => {
+    if (!state.wandLastSeed || !state.wandMask) return;
+    if (wandRetuneRaf) return;
+    wandRetuneRaf = requestAnimationFrame(() => {
+      wandRetuneRaf = null;
+      runMagicWand(state.wandLastSeed.x, state.wandLastSeed.y, 'replace', { retune: true });
+    });
+  };
+  const liveBtn = document.getElementById('ge-wand-live');
+  liveBtn?.addEventListener('click', () => {
+    state.wandLiveRetune = !state.wandLiveRetune;
+    liveBtn.classList.toggle('active', state.wandLiveRetune);
+    liveBtn.setAttribute('aria-pressed', state.wandLiveRetune ? 'true' : 'false');
+    if (state.wandLiveRetune) retuneWand();
+  });
+  document.getElementById('ge-wand-tolerance')?.addEventListener('input', (e) => {
+    state.wandTolerance = parseInt(e.target.value, 10);
+    const lbl = document.getElementById('ge-wand-tol-label');
+    if (lbl) lbl.textContent = state.wandTolerance;
+    const wp = document.getElementById('ge-wand-tol-preview');
+    if (wp) wp.style.opacity = (state.wandTolerance / 100).toFixed(2);
+    if (state.wandLiveRetune) retuneWand();
+  });
+  document.getElementById('ge-bucket-tolerance')?.addEventListener('input', (e) => {
+    state.bucketTolerance = Math.max(0, Math.min(255, parseInt(e.target.value, 10) || 0));
+    const blbl = document.getElementById('ge-bucket-tolerance-label');
+    if (blbl) blbl.textContent = state.bucketTolerance;
+  });
+
+  // Wand mode segmented toggle (New / Add / Subtract).
+  document.querySelectorAll('.ge-wand-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.wandMode;
+      if (!mode) return;
+      state.wandMode = mode;
+      document.querySelectorAll('.ge-wand-mode-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.wandMode === mode);
+      });
+    });
+  });
+
+  // Toggle the translucent red overlay for the active selection.
+  const toggleSelectionOverlay = () => {
+    state.wandMaskVisible = !state.wandMaskVisible;
+    ['ge-wand-vis', 'ge-marquee-vis', 'ge-lasso-vis', 'ge-sam-vis', 'ge-quickselect-vis', 'ge-objectselect-vis'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.innerHTML = state.wandMaskVisible ? EYE_OPEN : EYE_OFF;
+      btn.title = state.wandMaskVisible ? 'Hide selection overlay' : 'Show selection overlay';
+      btn.classList.toggle('visible', state.wandMaskVisible);
+    });
+    composite();
+  };
+  document.getElementById('ge-wand-vis')?.addEventListener('click', toggleSelectionOverlay);
+  document.getElementById('ge-marquee-vis')?.addEventListener('click', toggleSelectionOverlay);
+  document.getElementById('ge-lasso-vis')?.addEventListener('click', toggleSelectionOverlay);
+
+  document.getElementById('ge-wand-clear')?.addEventListener('click', wandClear);
+  document.getElementById('ge-lasso-clear')?.addEventListener('click', wandClear);
+  document.getElementById('ge-wand-invert')?.addEventListener('click', invertSelection);
+  document.getElementById('ge-wand-delete')?.addEventListener('click', wandDeleteSelection);
+  document.getElementById('ge-wand-copy')?.addEventListener('click', wandCopyToNewLayer);
+  document.getElementById('ge-wand-mask')?.addEventListener('click', wandToMask);
+
+  // SAM / Quick Select / Object Select share the wand's selection model, so
+  // they get the identical action row and the same caret "More" menu pattern
+  // (the shared CSS lives on the ge-wand-more-* classes).
+  const wireSelectionCaret = (prefix) => {
+    const btn = document.getElementById(`${prefix}-more`);
+    const menu = document.getElementById(`${prefix}-more-menu`);
+    if (!btn || !menu) return;
+    const closeMenu = () => {
+      if (menu.hidden) return;
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+      btn.classList.remove('active');
+    };
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = menu.hidden;
+      menu.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.classList.toggle('active', open);
+    });
+    document.addEventListener('click', (e) => {
+      if (menu.hidden) return;
+      if (menu.contains(e.target) || e.target === btn) return;
+      closeMenu();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMenu();
+    });
+  };
+  ['ge-sam', 'ge-quickselect', 'ge-objectselect'].forEach((prefix) => {
+    document.getElementById(`${prefix}-vis`)?.addEventListener('click', toggleSelectionOverlay);
+    document.getElementById(`${prefix}-clear`)?.addEventListener('click', wandClear);
+    document.getElementById(`${prefix}-invert`)?.addEventListener('click', invertSelection);
+    document.getElementById(`${prefix}-delete`)?.addEventListener('click', wandDeleteSelection);
+    document.getElementById(`${prefix}-copy`)?.addEventListener('click', wandCopyToNewLayer);
+    document.getElementById(`${prefix}-mask`)?.addEventListener('click', wandToMask);
+    wireSelectionCaret(prefix);
+  });
+
+  // Quick Select brush size was an inert slider; wire it to the tool's brush
+  // size so the control actually changes the selection brush.
+  const quickSize = document.getElementById('ge-quickselect-size');
+  if (quickSize) {
+    const quickSizeValue = document.getElementById('ge-quickselect-size-label');
+    const syncQuickSize = () => {
+      state.quickSelectBrushSize = Math.max(4, Math.min(200, parseInt(quickSize.value, 10) || 24));
+      if (quickSizeValue) quickSizeValue.textContent = String(state.quickSelectBrushSize);
+    };
+    quickSize.addEventListener('input', syncQuickSize);
+    syncQuickSize();
+  }
+  // Selection-constrained Bg Remove — reuses the same path the toolbar
+  // Bg Remove button does. buildSelectionHintMask picks the active
+  // wand/lasso selection, so this just kicks off the existing flow.
+  document.getElementById('ge-wand-rembg')?.addEventListener('click', async () => {
+    const btn = document.getElementById('ge-wand-rembg');
+    const hint = buildSelectionHintMask();
+    if (!hint) { if (uiModule) uiModule.showToast('Click to make a wand selection first'); return; }
+    await applyImageTool('/api/image/remove-bg', { hint_mask: hint }, 'BG Removed', btn);
+    wandClear();
+  });
+
+  // Live tolerance preview (just opacity-tracking like sharpen).
+  const wandTolPrev = document.getElementById('ge-wand-tol-preview');
+  if (wandTolPrev) wandTolPrev.style.opacity = (state.wandTolerance / 100).toFixed(2);
+}

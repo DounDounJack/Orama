@@ -1,0 +1,199 @@
+"""Cookbook serve lifecycle: kills scheduler-owned serves whose end-of-
+window has passed.
+
+Pairs with action_cookbook_serve in builtin_actions.py — that action
+stamps the task it launches with `_scheduledStopAtMs`, this loop ticks
+every 60s and kills any serve whose stamp is in the past.
+
+Single small module. Delete this file + the registration line in app.py
+and the feature stops doing anything; scheduler-launched serves just
+stay up until the user kills them manually.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+import time
+from pathlib import Path
+
+import httpx
+from core.constants import internal_api_base
+from src.constants import COOKBOOK_STATE_FILE
+
+logger = logging.getLogger(__name__)
+
+
+def _internal_headers() -> dict:
+    from core.middleware import INTERNAL_TOOL_HEADER, INTERNAL_TOOL_TOKEN
+    return {INTERNAL_TOOL_HEADER: INTERNAL_TOOL_TOKEN}
+
+
+async def _delete_endpoint_for_task(task: dict) -> None:
+    """Remove a stopped serve's endpoint using the normal deletion contract."""
+    import re
+    from urllib.parse import quote
+
+    endpoint_id = str(task.get("_endpointId") or task.get("endpointId") or "").strip()
+    serve_session_id = str(task.get("sessionId") or task.get("id") or "").strip()
+    if (
+        not re.fullmatch(r"(?:local|img)-[0-9a-f]{8}", endpoint_id)
+        or not serve_session_id
+    ):
+        logger.info("cookbook_serve_lifecycle: missing endpoint/session identity")
+        return
+
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            response = await client.delete(
+                f"{internal_api_base()}/api/model-endpoints/{quote(endpoint_id, safe='')}",
+                params={"expected_cookbook_serve_session_id": serve_session_id},
+                headers=_internal_headers(),
+            )
+        if response.status_code == 200:
+            logger.info(
+                "cookbook_serve_lifecycle: deleted endpoint %s for serve %s",
+                endpoint_id, serve_session_id,
+            )
+        elif response.status_code in (404, 409):
+            logger.info(
+                "cookbook_serve_lifecycle: endpoint %s absent or reassigned; keeping it",
+                endpoint_id,
+            )
+        else:
+            logger.warning(
+                "cookbook_serve_lifecycle: endpoint %s deletion returned HTTP %s",
+                endpoint_id, response.status_code,
+            )
+    except Exception as exc:
+        logger.warning("cookbook_serve_lifecycle: cleanup failed: %s", exc)
+
+
+async def _stop_serve(session_id: str, remote_host: str = "", ssh_port: str = "") -> bool:
+    """Kill the tmux session that hosts the serve.
+
+    There's no `/api/model/stop` route — the cookbook UI and the chat
+    agent both kill via `/api/shell/exec` running a `tmux kill-session`
+    (wrapped in ssh for remote hosts). Mirror that here so the
+    lifecycle loop can actually stop scheduler-launched serves at
+    window-end. Without this, the action stamped `_scheduledStopAtMs`
+    correctly but every kill attempt failed silently (the route
+    returned 404 and the result was logged as "failed").
+    """
+    import shlex
+    if remote_host:
+        port_flag = f"-p {shlex.quote(str(ssh_port))} " if ssh_port and str(ssh_port) != "22" else ""
+        cmd = (
+            f"ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no "
+            f"{port_flag}{shlex.quote(remote_host)} "
+            f"'tmux kill-session -t {shlex.quote(session_id)}'"
+        )
+    else:
+        cmd = f"tmux kill-session -t {shlex.quote(session_id)}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(
+                f"{internal_api_base()}/api/shell/exec",
+                json={"command": cmd},
+                headers=_internal_headers(),
+            )
+            if r.status_code >= 400:
+                return False
+            data = r.json() if r.content else {}
+            ec = data.get("exit_code")
+            # tmux returns non-zero when the session is already gone
+            # ("can't find session: ..."). That's still "stop succeeded"
+            # from our POV — the goal is no live session at the end.
+            if ec in (None, 0):
+                return True
+            stderr = (data.get("stderr") or "").lower()
+            return "no server" in stderr or "can't find session" in stderr or "session not found" in stderr
+    except Exception as e:
+        logger.warning(f"cookbook_serve_lifecycle: stop {session_id} failed: {e}")
+        return False
+
+
+async def _tick() -> None:
+    state_path = Path(COOKBOOK_STATE_FILE)
+    if not state_path.exists():
+        return
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.warning("cookbook_serve_lifecycle: state file unreadable (%s), skipping tick", e)
+        return
+    tasks = state.get("tasks") or []
+    now_ms = int(time.time() * 1000)
+    to_stop = []
+    for t in tasks:
+        if not isinstance(t, dict):
+            continue
+        stop_at = t.get("_scheduledStopAtMs")
+        if not isinstance(stop_at, (int, float)):
+            continue
+        if stop_at > now_ms:
+            continue
+        if (t.get("status") or "").lower() in {"stopped", "ended", "killed", "crashed"}:
+            continue
+        sid = t.get("sessionId") or t.get("id")
+        if not sid:
+            continue
+        to_stop.append((sid, t.get("remoteHost") or "", t.get("sshPort") or ""))
+    if not to_stop:
+        return
+    # Re-read state once before writing so we capture any updates from
+    # concurrent UI syncs.
+    stopped_any = False
+    successfully_stopped_sids = set()
+    for sid, host, port in to_stop:
+        ok = await _stop_serve(sid, host, port)
+        logger.info(f"cookbook_serve_lifecycle: stop {sid} (host={host or 'local'}): {'ok' if ok else 'failed'}")
+        if ok:
+            stopped_any = True
+            successfully_stopped_sids.add(sid)
+            # Drop the auto-registered endpoint so the model picker and
+            # the chat router don't keep pointing at a dead server.
+            for t in tasks:
+                if isinstance(t, dict) and (t.get("sessionId") == sid or t.get("id") == sid):
+                    if t.get("type") == "serve":
+                        await _delete_endpoint_for_task(t)
+                    t["status"] = "stopped"
+                    t["_scheduledStopAtMs"] = None
+                    t["_lastStatusFlipAt"] = now_ms
+                    break
+    if stopped_any:
+        try:
+            from core.atomic_io import atomic_write_json
+            # Re-read the state file so concurrent UI writes (task adds,
+            # status flips, config edits) are not silently overwritten.
+            # Apply only our stop mutations to the fresh snapshot.
+            try:
+                fresh = json.loads(state_path.read_text(encoding="utf-8"))
+                fresh_tasks = fresh.get("tasks") or []
+            except Exception:
+                fresh = state
+                fresh_tasks = tasks
+            for ft in fresh_tasks:
+                if not isinstance(ft, dict):
+                    continue
+                ft_sid = ft.get("sessionId") or ft.get("id")
+                if ft_sid in successfully_stopped_sids:
+                    ft["status"] = "stopped"
+                    ft["_scheduledStopAtMs"] = None
+                    ft["_lastStatusFlipAt"] = now_ms
+            fresh["tasks"] = fresh_tasks
+            atomic_write_json(state_path, fresh)
+        except Exception as e:
+            logger.warning(f"cookbook_serve_lifecycle: state write failed: {e}")
+
+
+async def cookbook_serve_lifecycle_loop() -> None:
+    """Forever-loop. Registered as a startup task in app.py."""
+    await asyncio.sleep(20)  # let the rest of startup settle
+    while True:
+        try:
+            await _tick()
+        except Exception as e:
+            logger.warning(f"cookbook_serve_lifecycle tick failed: {e}")
+        await asyncio.sleep(60)
