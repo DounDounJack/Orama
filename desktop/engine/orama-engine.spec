@@ -6,6 +6,7 @@
 # libraries). The Tauri app ships that whole folder as a resource.
 
 import os
+import sys
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 ROOT = os.path.abspath(os.path.join(SPECPATH, "..", ".."))
@@ -80,7 +81,10 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    console=True,
+    # On Windows a console program would flash a black window for the engine
+    # and for every helper it starts, so build it as a windowless program.
+    console=(sys.platform != "win32"),
+    icon=(R("static", "icon.ico") if sys.platform == "win32" else None),
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

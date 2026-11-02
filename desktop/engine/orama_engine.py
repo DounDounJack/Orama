@@ -28,18 +28,37 @@ class _NullWriter:
         return False
 
 
+def _pid_alive(pid: int) -> bool:
+    if os.name == "nt":
+        # Never os.kill(pid, 0) on Windows: it terminates the process.
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        SYNCHRONIZE = 0x00100000
+        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+        handle = kernel32.OpenProcess(SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not handle:
+            return kernel32.GetLastError() == 5  # access denied: it exists
+        try:
+            return kernel32.WaitForSingleObject(handle, 0) == 0x102  # WAIT_TIMEOUT: still running
+        finally:
+            kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        pass  # exists, owned by someone else (shouldn't happen)
+    return True
+
+
 def _watch_parent(pid: int, on_gone):
     """Stop the engine if the órama window process dies without cleaning up."""
     while True:
         time.sleep(2)
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
+        if not _pid_alive(pid):
             on_gone()
             return
-        except PermissionError:
-            pass  # exists, owned by someone else (shouldn't happen)
-        if os.getppid() == 1:  # re-parented to launchd/init: our parent is gone
+        if os.name != "nt" and os.getppid() == 1:  # re-parented to launchd/init: our parent is gone
             on_gone()
             return
 

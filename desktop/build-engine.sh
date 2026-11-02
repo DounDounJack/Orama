@@ -5,7 +5,9 @@
 #
 # Makes desktop/.venv-engine (Python 3.12) if needed, installs the engine's
 # packages, and freezes it with PyInstaller into desktop/engine/dist/orama-engine/.
-# Needs Python 3.12 (Mac: `brew install python@3.12`).
+# Needs Python 3.12 (Mac: `brew install python@3.12`). ORAMA_PYTHON=/path/to/python
+# picks a specific one (the GitHub Actions build uses this; on Windows run it
+# from Git Bash).
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,23 +25,28 @@ if [ -z "$PY" ]; then
   exit 1
 fi
 
-if [ ! -x "$VENV/bin/python" ]; then
+# Windows venvs keep python in Scripts\, everyone else in bin/.
+VPY="$VENV/bin/python"
+[ -x "$VENV/Scripts/python.exe" ] && VPY="$VENV/Scripts/python.exe"
+if [ ! -x "$VPY" ]; then
   echo "Making build environment with $PY"
   "$PY" -m venv "$VENV"
+  VPY="$VENV/bin/python"
+  [ -x "$VENV/Scripts/python.exe" ] && VPY="$VENV/Scripts/python.exe"
 fi
 
 echo "Installing engine packages"
-"$VENV/bin/python" -m pip install -q --upgrade pip
+"$VPY" -m pip install -q --upgrade pip setuptools wheel
 # Full chromadb replaces chromadb-client (they conflict).
 REQS="$(mktemp)"
 grep -v '^chromadb-client' "$ROOT/requirements.txt" > "$REQS"
-"$VENV/bin/python" -m pip install -q -r "$REQS" -r "$HERE/engine/requirements-desktop.txt"
+"$VPY" -m pip install -q -r "$REQS" -r "$HERE/engine/requirements-desktop.txt"
 rm -f "$REQS"
 
 echo "Freezing engine (takes a few minutes)"
 cd "$HERE/engine"
-"$VENV/bin/python" -m PyInstaller --noconfirm --clean \
+"$VPY" -m PyInstaller --noconfirm --clean \
   --distpath "$HERE/engine/dist" --workpath "$HERE/engine/build" \
   orama-engine.spec
 
-echo "Done: $HERE/engine/dist/orama-engine/orama-engine"
+echo "Done: $HERE/engine/dist/orama-engine/"
