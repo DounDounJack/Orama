@@ -3,7 +3,7 @@
 This is Odysseus with the Doun Industries look: jet black with orange, the
 órama logo, and an Object Detection section (placeholder for now). Email,
 Calendar, Gallery and Tasks are taken out.
-
+  
 It runs in Docker, so it works on Linux, Windows or Mac.
 
 ## 1. Install Docker (once)
